@@ -1,9 +1,9 @@
 #include <string.h>
-#include "inode.h"
-#include "block.h"
-#include "common.h"
-#include "mintest.h"
-#include "fs.h"
+#include "../include/inode.h"
+#include "../include/block.h"
+#include "../include/common.h"
+#include "../../include/mintest.h"
+#include "../include/fs.h"
 #include <time.h>
 #include <stdlib.h>
 
@@ -17,7 +17,7 @@ mt_test(test_ialloc) {
     inode *ip = ialloc(T_FILE);
     mt_assert(ip != NULL);
     mt_assert(ip->type == T_FILE);
-    mt_assert(ip->size == 0);
+    mt_assert(ip->fileSize == 0);
     mt_assert(ip->blocks == 0);
     iput(ip);
 
@@ -48,18 +48,18 @@ mt_test(test_iupdate) {
     inode *ip = ialloc(T_FILE);
     mt_assert(ip != NULL);
     uint inum = ip->inum;
-    ip->size = 1024;
+    ip->fileSize = 1024;
     iupdate(ip);
     iput(ip);
 
     ip = iget(inum);
-    mt_assert(ip->size == 1024);
+    mt_assert(ip->fileSize == 1024);
     ip->blocks = 10;
     iupdate(ip);
     iput(ip);
 
     inode *retrieved = iget(inum);
-    mt_assert(retrieved->size == 1024);
+    mt_assert(retrieved->fileSize == 1024);
     mt_assert(retrieved->blocks == 10);
     iput(retrieved);
     return 0;
@@ -74,7 +74,7 @@ mt_test(test_writei) {
     uchar data[] = "Hello, World!";
     int bytes_written = writei(ip, data, 0, sizeof(data));
     mt_assert(bytes_written == sizeof(data));
-    mt_assert(ip->size == sizeof(data));
+    mt_assert(ip->fileSize == sizeof(data));
     mt_assert(ip->blocks > 0);
 
     // Verify the written data
@@ -120,7 +120,7 @@ mt_test(test_read_write_mixed) {
     uchar initial_data[] = "Initial Data";
     int bytes_written = writei(ip, initial_data, 0, sizeof(initial_data));
     mt_assert(bytes_written == sizeof(initial_data));
-    mt_assert(ip->size == sizeof(initial_data));
+    mt_assert(ip->fileSize == sizeof(initial_data));
 
     // Read back the initial data
     uchar read_buf[sizeof(initial_data)];
@@ -132,15 +132,15 @@ mt_test(test_read_write_mixed) {
     uchar overwrite_data[] = "Overwrite";
     bytes_written = writei(ip, overwrite_data, 8, sizeof(overwrite_data));
     mt_assert(bytes_written == sizeof(overwrite_data));
-    mt_assert(ip->size == 8 + sizeof(overwrite_data));
+    mt_assert(ip->fileSize == 8 + sizeof(overwrite_data));
 
     // Read back the mixed data
     uchar mixed_buf[sizeof(initial_data) + sizeof(overwrite_data)];
-    bytes_read = readi(ip, mixed_buf, 0, ip->size);
-    mt_assert(bytes_read == ip->size);
+    bytes_read = readi(ip, mixed_buf, 0, ip->fileSize);
+    mt_assert(bytes_read == ip->fileSize);
 
     uchar expected_data[] = "Initial Overwrite";
-    mt_assert(memcmp(mixed_buf, expected_data, ip->size) == 0);
+    mt_assert(memcmp(mixed_buf, expected_data, ip->fileSize) == 0);
 
     iput(ip);
     return 0;
@@ -164,7 +164,7 @@ mt_test(test_random_binary_read_write) {
 
     int bytes_written = writei(ip, random_data, 0, data_size);
     mt_assert(bytes_written == data_size);
-    mt_assert(ip->size == data_size);
+    mt_assert(ip->fileSize == data_size);
 
     uchar *read_buf = malloc(data_size);
     mt_assert(read_buf != NULL);
@@ -177,13 +177,13 @@ mt_test(test_random_binary_read_write) {
     int offset = data_size / 2;
     bytes_written = writei(ip, random_data, offset, data_size);
     mt_assert(bytes_written == data_size);
-    mt_assert(ip->size == data_size + offset);
+    mt_assert(ip->fileSize == data_size + offset);
     free(read_buf);
     
-    read_buf = malloc(ip->size);
+    read_buf = malloc(ip->fileSize);
     mt_assert(read_buf != NULL);
-    bytes_read = readi(ip, read_buf, 0, ip->size);
-    mt_assert(bytes_read == ip->size);
+    bytes_read = readi(ip, read_buf, 0, ip->fileSize);
+    mt_assert(bytes_read == ip->fileSize);
 
     mt_assert(memcmp(random_data, read_buf + offset, data_size) == 0);
     mt_assert(memcmp(random_data, read_buf, offset) == 0);

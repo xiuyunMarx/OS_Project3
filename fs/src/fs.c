@@ -5,7 +5,7 @@
 #include <string.h>
 
 #include "block.h"
-#include "log.h"
+#include "../../include/log.h"
 
 void sbinit() {
     uchar buf[BSIZE];

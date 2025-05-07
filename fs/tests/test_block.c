@@ -1,8 +1,9 @@
+#include <stdlib.h>
 #include <string.h>
 
-#include "block.h"
-#include "common.h"
-#include "mintest.h"
+#include "../include/block.h"
+#include "../include/common.h"
+#include "../../include/mintest.h"
 
 int nmeta;
 
@@ -56,6 +57,7 @@ mt_test(test_zero_block) {
 mt_test(test_allocate_block) {
     mock_format();
     uint bno = allocate_block();
+    // printf("Allocated block number: %d , nmeta: %d", bno , nmeta);
     mt_assert(bno == nmeta);  // the first free block
 
     uchar buf[BSIZE];
@@ -106,4 +108,5 @@ void block_tests() {
     mt_run_test(test_allocate_block);
     mt_run_test(test_allocate_block_all);
     mt_run_test(test_free_block);
+    free(sb.bitmap);
 }

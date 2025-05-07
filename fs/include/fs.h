@@ -5,12 +5,12 @@
 #include "inode.h"
 
 // used for cmd_ls
-typedef struct {
-    short type;
+typedef struct { //type = directory
     char name[MAXNAME];
-    // ...
-    // ...
-    // Other fields can be added as needed
+    uint type;
+    uint inum;
+    ushort owner;
+    ushort permission;
 } entry;
 
 void sbinit();

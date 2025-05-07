@@ -3,8 +3,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "log.h"
-#include "tcp_utils.h"
+#include "../../include/log.h"
+#include "../../include/tcp_utils.h"
 
 #define NCMD (sizeof(cmd_table) / sizeof(cmd_table[0]))
 

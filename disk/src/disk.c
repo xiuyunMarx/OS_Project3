@@ -7,7 +7,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-#include "log.h"
+#include "../../include/log.h"
 
 // global variables
 int _ncyl, _nsec, ttd;

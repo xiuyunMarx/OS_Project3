@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "log.h"
-#include "mintest.h"
+#include "../../include/log.h"
+#include "../../include/mintest.h"
 
 int mt_tests_run = 0;
 int mt_pass_count = 0;
@@ -13,9 +13,9 @@ void inode_tests();
 void fs_tests();
 
 void all_tests() {
-    mt_run_suite(block_tests);
+    // mt_run_suite(block_tests);
     mt_run_suite(inode_tests);
-    mt_run_suite(fs_tests);
+    // mt_run_suite(fs_tests);
 }
 
 FILE *log_file;

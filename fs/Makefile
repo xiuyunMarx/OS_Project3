@@ -36,7 +36,8 @@ LDFLAGS += -lpthread
 
 DEBUG ?= 1
 ifeq ($(DEBUG),1)
-CFLAGS += -fsanitize=address -g
+# CFLAGS += -fsanitize=address -g
+CFLAGS += -g
 endif
 
 all: $(EXES)

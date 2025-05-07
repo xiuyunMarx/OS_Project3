@@ -4,10 +4,10 @@
 #include <string.h>
 #include <time.h>
 
-#include "block.h"
-#include "common.h"
-#include "fs.h"
-#include "log.h"
+#include "../include/block.h"
+#include "../include/common.h"
+#include "../include/fs.h"
+#include "../../include/log.h"
 
 // global variables
 int ncyl, nsec;

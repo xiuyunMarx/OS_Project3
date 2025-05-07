@@ -2,11 +2,11 @@
 #include <string.h>
 #include <time.h>
 
-#include "block.h"
-#include "common.h"
-#include "fs.h"
-#include "inode.h"
-#include "mintest.h"
+#include "../include/block.h"
+#include "../include/common.h"
+#include "../include/fs.h"
+#include "../include/inode.h"
+#include "../../include/mintest.h"
 
 static void format() {
     cmd_login(1);
