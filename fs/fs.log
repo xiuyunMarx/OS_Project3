@@ -1,1 +1,74 @@
 [WARN] initializing disk...
+[WARN] mounting disk...: 1746711799
+[ERROR] sbinit: invalid superblock
+[ERROR] iget: iNode 0 does not exist
+[WARN] cmd_f: root uninitialized
+[WARN] allocate inode: No free inodes blocks
+[ERROR] ialloc: no enough space
+[ERROR] cmd_f: root allocation failed
+[WARN] allocate inode: No free inodes blocks
+[ERROR] ialloc: no enough space
+[ERROR] sbinit: invalid superblock
+[ERROR] iget: iNode 0 does not exist
+[WARN] cmd_f: root uninitialized
+[WARN] allocate inode: No free inodes blocks
+[ERROR] ialloc: no enough space
+[ERROR] cmd_f: root allocation failed
+[WARN] allocate inode: No free inodes blocks
+[ERROR] ialloc: no enough space
+[ERROR] sbinit: invalid superblock
+[ERROR] iget: iNode 0 does not exist
+[WARN] cmd_f: root uninitialized
+[WARN] allocate inode: No free inodes blocks
+[ERROR] ialloc: no enough space
+[ERROR] cmd_f: root allocation failed
+[WARN] allocate inode: No free inodes blocks
+[ERROR] ialloc: no enough space
+[ERROR] sbinit: invalid superblock
+[ERROR] iget: iNode 0 does not exist
+[WARN] cmd_f: root uninitialized
+[WARN] allocate inode: No free inodes blocks
+[ERROR] ialloc: no enough space
+[ERROR] cmd_f: root allocation failed
+[WARN] allocate inode: No free inodes blocks
+[ERROR] ialloc: no enough space
+[ERROR] sbinit: invalid superblock
+[ERROR] iget: iNode 0 does not exist
+[WARN] cmd_f: root uninitialized
+[WARN] allocate inode: No free inodes blocks
+[ERROR] ialloc: no enough space
+[ERROR] cmd_f: root allocation failed
+[WARN] allocate inode: No free inodes blocks
+[ERROR] ialloc: no enough space
+[ERROR] sbinit: invalid superblock
+[ERROR] iget: iNode 0 does not exist
+[WARN] cmd_f: root uninitialized
+[WARN] allocate inode: No free inodes blocks
+[ERROR] ialloc: no enough space
+[ERROR] cmd_f: root allocation failed
+[WARN] allocate inode: No free inodes blocks
+[ERROR] ialloc: no enough space
+[ERROR] sbinit: invalid superblock
+[ERROR] iget: iNode 0 does not exist
+[WARN] cmd_f: root uninitialized
+[WARN] allocate inode: No free inodes blocks
+[ERROR] ialloc: no enough space
+[ERROR] cmd_f: root allocation failed
+[WARN] allocate inode: No free inodes blocks
+[ERROR] ialloc: no enough space
+[ERROR] sbinit: invalid superblock
+[ERROR] iget: iNode 0 does not exist
+[WARN] cmd_f: root uninitialized
+[WARN] allocate inode: No free inodes blocks
+[ERROR] ialloc: no enough space
+[ERROR] cmd_f: root allocation failed
+[ERROR] iget: iNode 0 does not exist
+[ERROR] cmd_ls: dir cannot be found
+[ERROR] sbinit: invalid superblock
+[ERROR] iget: iNode 0 does not exist
+[WARN] cmd_f: root uninitialized
+[WARN] allocate inode: No free inodes blocks
+[ERROR] ialloc: no enough space
+[ERROR] cmd_f: root allocation failed
+[ERROR] iget: iNode 0 does not exist
+[ERROR] cmd_ls: dir cannot be found

@@ -1,8 +1,10 @@
 #include "../include/block.h"
 
+#include "inode.h"
 #include "limits.h"
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "../include/common.h"
 #include "../../include/log.h"
@@ -16,12 +18,14 @@ superblock sb={
     .n_iNodes = 0,
     .data_start = 1024,
     .iNode_start = 2,
-    .n_bitmap_blocks = 0
+    .n_bitmap_blocks = 0,
+    .root = 0
 };
 
 char *disk = NULL;
 
 void _mount_disk(){
+    Warn("mounting disk...: %d", time(NULL));
     disk = (char *)malloc(sb.size * BSIZE);
     sb.n_bitmap_blocks = (sb.size / BPB) + 1;
     sb.iNode_start = sb.bmapstart + sb.n_bitmap_blocks; //start point of iNode
@@ -29,9 +33,15 @@ void _mount_disk(){
     sb.n_blocks = sb.size - sb.iNode_start; //remaining blocks for data
     sb.n_iNodes = sb.data_start - sb.iNode_start; //remaining blocks for iNodes
     sb.bitmap = (bool *)malloc(sb.n_bitmap_blocks * BSIZE);
+    sb.root = 0; //uninitialized
     memset(sb.bitmap, 0 , sb.n_bitmap_blocks * BSIZE);
     for(int i = sb.bmapstart; i < sb.bmapstart + sb.n_bitmap_blocks ; i++)
         zero_block(i); //initialize bitmap blocks
+
+    uchar *buf = (uchar *)malloc(BSIZE);
+    memcpy(buf, &sb, sizeof(sb));
+    write_block(0, buf);
+    free(buf); // write superblock to disk
 }
 
 void _fetch_bitmap(){
@@ -55,7 +65,7 @@ void zero_block(uint bno) {
 
 uint allocate_iNode_block(){ //为一个iNode分配一个块
     if(disk == NULL){
-        Warn("initializing disk...");
+        Warn("initializing disk..., " );
         _mount_disk();
     }
 

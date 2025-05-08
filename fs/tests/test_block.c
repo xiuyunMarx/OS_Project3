@@ -108,5 +108,5 @@ void block_tests() {
     mt_run_test(test_allocate_block);
     mt_run_test(test_allocate_block_all);
     mt_run_test(test_free_block);
-    free(sb.bitmap);
+    // free(sb.bitmap);
 }

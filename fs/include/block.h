@@ -30,4 +30,5 @@ void write_block(int blockno, uchar *buf);
 
 uint allocate_data_block();
 uint allocate_iNode_block();
+
 #endif

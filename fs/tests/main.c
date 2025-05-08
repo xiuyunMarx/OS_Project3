@@ -13,9 +13,9 @@ void inode_tests();
 void fs_tests();
 
 void all_tests() {
-    // mt_run_suite(block_tests);
+    mt_run_suite(block_tests);
     mt_run_suite(inode_tests);
-    // mt_run_suite(fs_tests);
+    mt_run_suite(fs_tests);
 }
 
 FILE *log_file;

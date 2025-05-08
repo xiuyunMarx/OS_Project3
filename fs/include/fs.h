@@ -11,6 +11,7 @@ typedef struct { //type = directory
     uint inum;
     ushort owner;
     ushort permission;
+    uint modTime;
 } entry;
 
 void sbinit();

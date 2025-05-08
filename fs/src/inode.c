@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <bits/types/locale_t.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -84,14 +85,17 @@ inode *iget(uint inum) {
     return ret;
 }
 
-void iput(inode *ip) { free(ip); }
+void iput(inode *ip) {
+    iupdate(ip);
+    free(ip);
+}
 
 inode *ialloc(short type) {
     inode *ret = (inode *)malloc(sizeof(inode));
     ret->type = type;
     ret->fileSize = 0;
     ret->blocks = 0;
-
+    memset(ret->addrs, 0 , (NDIRECT + 2) * sizeof(uint));
     uint inum = allocate_iNode_block();
     if(inum == 0){
         free(ret);
@@ -211,6 +215,7 @@ uint _which_write(inode *ip, uint logic){ //this function should be called seque
             uint bno = allocate_data_block();
             if(!bno){
                 Error("_which_write: no enough space");
+                free(single_indirect);
                 return 0;
             }
             single_indirect[logic - NDIRECT] = bno;
@@ -245,6 +250,7 @@ uint _which_write(inode *ip, uint logic){ //this function should be called seque
             uint bno = allocate_data_block();
             if(bno == 0){
                 Error("_which_write: no enough space");
+                free(double_indirect0);
                 return 0;
             }else{
                 double_indirect0[where] = bno;
@@ -259,6 +265,8 @@ uint _which_write(inode *ip, uint logic){ //this function should be called seque
             uint bno = allocate_data_block();
             if(bno == 0){
                 Error("_which_write: no enough space");
+                free(double_indirect0);
+                free(double_indirect1);
                 return 0;
             }else{
                 double_indirect1[offset] = bno;
@@ -318,4 +326,36 @@ int writei(inode *ip, uchar *src, uint off, uint n) {
     ip->fileSize = max(ip->fileSize, off + n);
     iupdate(ip);
     return n;
+}
+
+
+int wipeout_inode(inode *ip){
+    if(ip == NULL){
+        Error("wipeout_inode: ip is NULL");
+        return E_ERROR;
+    }
+    uint total_blocks = ip->blocks;
+    for(uint i=0;i<total_blocks;i++){
+        uint bno = _which_read(ip, i);
+        free_block(bno);
+    }
+
+    if(ip->addrs[NDIRECT] != 0){
+        free_block(ip->addrs[NDIRECT]);
+    }
+
+    if(ip->addrs[NDIRECT + 1] != 0){
+        uint *double_indirect0 = (uint *)malloc(BSIZE);
+        read_block(ip->addrs[NDIRECT + 1], (uchar *)double_indirect0);
+        for(uint i=0;i<BSIZE/sizeof(uint);i++){
+            if(double_indirect0[i] != 0){
+                free_block(double_indirect0[i]);
+            }
+        }
+        free_block(ip->addrs[NDIRECT + 1]);
+        free(double_indirect0);
+    }
+
+    free_block(ip->inum);
+    return E_SUCCESS;
 }

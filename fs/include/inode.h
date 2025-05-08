@@ -82,5 +82,6 @@ inline uint maxFileSize(){
 }
 
 void store_iNode(inode *ip); //store an inode to disk
-inode *load_iNode(uint inum); // load an inode from disk
+inode *load_iNode(uint inum); // load an inode from disk 
+int wipeout_inode(inode *ip); // wipe out an inode from disk
 #endif

@@ -50,11 +50,11 @@ endef
 $(foreach exe,$(EXES),$(eval $(call make-target,$(exe))))
 
 run: FS_local
-	sudo sysctl vm.mmap_rnd_bits=28
+	sysctl vm.mmap_rnd_bits=28
 	./FS_local
 
 test: test_fs
-	sudo sysctl vm.mmap_rnd_bits=28
+	sysctl vm.mmap_rnd_bits=28
 	./test_fs
 
 # rules to build object files
