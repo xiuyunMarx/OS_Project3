@@ -14,23 +14,17 @@
 
 entry curDir;
 void sbinit() {
-    uchar buf[BSIZE];
-    read_block(0, buf);
-    memcpy(&sb, buf, sizeof(sb));
-    if (sb.magic != 0x12345678) {
-        Error("sbinit: invalid superblock");
-        return;
-    }
+    
 }
 
 int cmd_f(int ncyl, int nsec) {
  /* Format. This will format the file system on the disk, by initializing any/all of the tables that
  the file system relies on*/
     sb.size = ncyl * nsec;
-    sbinit();
-    inode *root = iget(sb.root);
-    if(root == NULL){
-        Warn("cmd_f: root uninitialized");
+    _mount_disk();
+    inode *root ;
+    if(sb.root == 0){
+        Warn("cmd_f: file system uninitialized");
         root = ialloc(T_DIR);
         if(root == NULL){
             Error("cmd_f: root allocation failed");
@@ -41,6 +35,12 @@ int cmd_f(int ncyl, int nsec) {
         writei(root, (uchar *)hardlink, 0, sizeof(hardlink));
          //add hardlink to root . and ..
         sb.root = root->inum;
+    }else{
+        root = iget(sb.root);
+        if(root == NULL){
+            Error("cmd_f: root inode error");
+            return E_ERROR;
+        }
     }
 
     strcpy(curDir.name, root->name);
@@ -732,3 +732,4 @@ int cmd_d(char *name, uint pos, uint len) {
 int cmd_login(int auid) {
     return E_SUCCESS;
 }
+

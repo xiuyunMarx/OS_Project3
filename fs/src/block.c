@@ -25,8 +25,14 @@ superblock sb={
 char *disk = NULL;
 
 void _mount_disk(){
-    Warn("mounting disk...: %d", time(NULL));
+    Warn("mounting disk...:");
+    if(disk != NULL){
+        free(disk);
+    }
     disk = (char *)malloc(sb.size * BSIZE);
+    memset(disk, 0, sb.size * BSIZE);
+
+    sb.bmapstart = 1; //start point of bitmap
     sb.n_bitmap_blocks = (sb.size / BPB) + 1;
     sb.iNode_start = sb.bmapstart + sb.n_bitmap_blocks; //start point of iNode
     sb.data_start = sb.size / 2; // 50% of the disk for data

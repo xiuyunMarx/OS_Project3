@@ -56,6 +56,9 @@ void store_iNode(inode *ip){
 }
 
 bool _is_exist(uint inum){ //检查在inum的位置是否有inode
+    if(inum == 0){
+        return false;
+    }
     if(inum < sb.iNode_start ||inum >=sb.data_start){
         return false;
     }
