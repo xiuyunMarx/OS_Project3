@@ -3,7 +3,8 @@
 
 #include "common.h"
 #include "stdbool.h"
-
+// #include "../../disk/include/disk.h"
+#define MAXUSERS 32
 typedef struct {
     uint magic;      // Magic number, used to identify the file system
     uint size;       // Size in blocks
@@ -15,6 +16,11 @@ typedef struct {
     uint iNode_start;  // Block number of first inode block
     uint n_bitmap_blocks; // Number of blocks for the bitmap
     uint root; // Root inode number
+    struct USERS{
+        uint uid;
+        uint cwd; //the inum of the current working directory
+    }users[MAXUSERS];
+    uint n_users; // Number of users
 } superblock;
 
 // sb is defined in block.c
@@ -31,6 +37,6 @@ void write_block(int blockno, uchar *buf);
 uint allocate_data_block();
 uint allocate_iNode_block();
 
-void _mount_disk();
-bool hasDisk();
+void _mount_disk(int ncyl, int nsec);
+void exit_block();
 #endif

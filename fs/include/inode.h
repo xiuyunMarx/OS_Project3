@@ -18,7 +18,7 @@ typedef struct {
     char name[MAXNAME]; // File name
     uint inum; //这个inode 块在磁盘中的绝对坐标
     ushort type:2;              // File type
-    ushort permission:4;  //file Mode
+    ushort permission:9;  //file Mode
     ushort owner:15;
     uint fileSize;                // Size in bytes
     uint blocks;              // Number of blocks, may be larger than size
@@ -35,7 +35,7 @@ typedef struct {
     char name[MAXNAME]; // File name
     uint inum; //the index of this inode, which is the absolute number in disk
     ushort type:2;              // File type
-    ushort permission:4;
+    ushort permission:6; //owner permission(3 bits) + others permission(3 bits)
     ushort owner:15;
     uint fileSize;                // Size in bytes
     uint blocks;              // Number of blocks, may be larger than size

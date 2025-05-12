@@ -1,4 +1,4 @@
-#include "inode.h"
+#include "../include/inode.h"
 
 #include <assert.h>
 #include <bits/types/locale_t.h>
@@ -10,7 +10,7 @@
 
 #include "../include/block.h"
 #include "../../include/log.h"
-#include "common.h"
+#include "../include/common.h"
 
 
 void copy_to_diNode(dinode *d, inode *ip){

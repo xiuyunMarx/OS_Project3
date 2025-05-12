@@ -1,3 +1,17 @@
-[INFO] Disk initialized: 毛主席万岁, 10 Cylinders, 10 Sectors per cylinder
-[INFO] Use command: n
-[INFO] No such command
+[INFO] Disk initialized: test_disk.img, 10 Cylinders, 10 Sectors per cylinder
+[INFO] Disk closed
+[INFO] Disk initialized: test_disk.img, 10 Cylinders, 10 Sectors per cylinder
+[INFO] Disk closed
+[INFO] Disk initialized: test_disk.img, 10 Cylinders, 10 Sectors per cylinder
+[INFO] Disk closed
+[INFO] Disk initialized: test_disk.img, 10 Cylinders, 10 Sectors per cylinder
+[INFO] Disk closed
+[INFO] Disk initialized: test_disk.img, 10 Cylinders, 10 Sectors per cylinder
+[INFO] Disk closed
+[INFO] Disk initialized: test_disk.img, 10 Cylinders, 10 Sectors per cylinder
+[INFO] Invalid cylinder or sector
+[INFO] Invalid cylinder or sector
+[INFO] Invalid cylinder or sector
+[INFO] Invalid cylinder or sector
+[INFO] Data too long
+[INFO] Disk closed

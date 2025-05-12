@@ -29,6 +29,7 @@ static int exist(char *name, int type) {
 }
 
 mt_test(test_cmd_ls) {
+    
     format();
     entry *entries;
     int n;

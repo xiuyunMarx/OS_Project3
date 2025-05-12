@@ -1,6 +1,7 @@
 #ifndef __FS_H__
 #define __FS_H__
 
+#include "block.h"
 #include "common.h"
 #include "inode.h"
 
@@ -13,6 +14,7 @@ typedef struct { //type = directory
     ushort permission;
     uint modTime;
 } entry;
+
 
 void sbinit();
 
@@ -33,4 +35,7 @@ int cmd_d(char *name, uint pos, uint len);
 
 int cmd_login(int auid);
 
+int user_init(uint uid);
+int user_end(uint uid);
+void cmd_exit(uint u);
 #endif

@@ -1,3 +1,3 @@
-build/src/inode.o: src/inode.c include/inode.h include/common.h \
- include/block.h src/../include/block.h src/../../include/log.h \
- include/common.h
+build/src/inode.o: src/inode.c src/../include/inode.h \
+ src/../include/common.h src/../include/block.h src/../include/block.h \
+ src/../../include/log.h src/../include/common.h

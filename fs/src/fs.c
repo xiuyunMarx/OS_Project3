@@ -1,31 +1,131 @@
-#include "fs.h"
+#include "../include/fs.h"
 
+#include <asm-generic/errno.h>
 #include <assert.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
 
-#include "block.h"
+#include "../include/block.h"
 #include "../../include/log.h"
-#include "common.h"
-#include "inode.h"
+#include "../include/common.h"
+#include "../include/inode.h"
 
-entry curDir;
+entry curDir, backUp;
+uint curUser=1;
 void sbinit() {
-    
+    curUser  = 1;
+}
+
+entry _fetch_entry(uint inum){
+    inode *dir = iget(inum);
+    entry ret;
+    ret.inum = 0;
+    if(dir == NULL){
+        Error("_fetch_entry: fetching inode failed");
+        return ret;
+    }
+    ret.inum = inum;
+    ret.type = dir->type;
+    assert(ret.type == T_DIR);
+    ret.owner = dir->owner;
+    ret.permission = dir->permission;
+    ret.modTime = dir->modTime;
+    strcpy(ret.name, dir->name);
+    iput(dir);
+    return ret;
+}
+
+int user_init(uint uid){
+    for(int i=0;i<MAXUSERS;i++){
+        if(sb.users[i].uid == uid){
+            backUp = curDir;
+            curDir = _fetch_entry(sb.users[i].cwd);
+            if(curDir.inum == 0){
+                Error("user %d : cwd not found", uid);
+                return E_ERROR;
+            }
+            curUser = uid;
+            return E_SUCCESS;
+        }
+    }
+    Error("user %d : please login first", uid);
+    return E_ERROR;
+}
+
+enum {
+    READ = 4,
+    WRITE = 2,
+    EXECUTE = 1,
+};
+uint _permission_check(inode *ip){
+    if(curUser == 1){
+        return READ | WRITE | EXECUTE; //root can access everything
+    }
+    if(ip == NULL){
+        fprintf(stderr, "_permission check: Error: ip cannot be NULL, you dump developer\n");
+        Error("_permission check: Error: ip cannot be NULL, you dump developer");
+        return E_ERROR;
+    }
+    if(curUser == ip->owner){
+        ushort p = ip->permission & 0b111000; //the first 3 bits
+        switch (p) {
+            case 0b111000: return READ | WRITE | EXECUTE;
+            case 0b110000: return READ | WRITE;
+            case 0b101000: return READ | EXECUTE;
+            case 0b100000: return READ;
+            case 0b011000: return WRITE | EXECUTE;
+            case 0b010000: return WRITE;
+            case 0b001000: return EXECUTE;
+            default: return 0;
+        }
+    }else{
+        ushort p = ip->permission & 0b000111; //the last 3 bits
+        switch (p) {
+            case 0b000111: return READ | WRITE | EXECUTE;
+            case 0b000110: return READ | WRITE;
+            case 0b000101: return READ | EXECUTE;
+            case 0b000100: return READ;
+            case 0b000011: return WRITE | EXECUTE;
+            case 0b000010: return WRITE;
+            case 0b000001: return EXECUTE;
+            default: return 0;
+        }
+    }
+}
+
+int user_end(uint uid){
+    //update the status when a user finishes executing a command
+    curUser = 1;
+    for(int i=0;i<MAXUSERS;i++){
+        if(sb.users[i].uid == uid){
+            sb.users[i].cwd = curDir.inum;
+            curDir = backUp;
+            return E_SUCCESS;
+        }
+    }
+    Error("user %d : Not Found", uid);
+    return E_ERROR;
 }
 
 int cmd_f(int ncyl, int nsec) {
  /* Format. This will format the file system on the disk, by initializing any/all of the tables that
  the file system relies on*/
-    sb.size = ncyl * nsec;
-    _mount_disk();
+    if(curUser != 1){
+        Error("cmd_f: permisssion denied, only ROOT can format the disk");
+        return E_ERROR;
+    }
+
+    _mount_disk(ncyl, nsec);
     inode *root ;
     if(sb.root == 0){
         Warn("cmd_f: file system uninitialized");
         root = ialloc(T_DIR);
+        root->owner = 1145; //root can be accessed by any user
+        root->permission = 0b111111; //root can be accessed by any user
         if(root == NULL){
             Error("cmd_f: root allocation failed");
             return E_ERROR;
@@ -49,6 +149,7 @@ int cmd_f(int ncyl, int nsec) {
     curDir.owner = root->owner;
     curDir.permission = root->permission;
 
+    sbinit();
     iput(root);
     return E_SUCCESS;
 }
@@ -69,8 +170,23 @@ bool _check_duiplicate(char *name) {
 }
 
 int cmd_mk(char *name, short mode) {
- //mk f: Create a file. This will create a file named f in the file system.
+    //mk f: Create a file. This will create a file named f in the file system.
     //mode is the permission of the file
+    inode *tmp = iget(curDir.inum);
+    if(tmp == NULL){
+        Error("cmd_mk: dir cannot be found");
+        return E_ERROR;
+    }
+    ushort res = _permission_check(tmp);
+    // require write+execute on directory
+    if((res & (WRITE|EXECUTE)) != (WRITE|EXECUTE)){
+        Error("cmd_mk: permission denied");
+        iput(tmp);
+        return E_ERROR;
+    }
+    iput(tmp);
+    /*permission check on creating file*/
+
     if(_check_duiplicate(name)){
         Error("cmd_mk: file %s already exists", name);
         return E_ERROR;
@@ -83,6 +199,8 @@ int cmd_mk(char *name, short mode) {
     }
     strcpy(file->name , name);
     file->permission = mode;
+    file->owner = curUser;
+    file->modTime = time(NULL); //create a new File, and write in owner
 
     inode *dir = iget(curDir.inum);
     if(dir == NULL){
@@ -102,18 +220,33 @@ int cmd_mk(char *name, short mode) {
 
 int cmd_mkdir(char *name, short mode) {
     //mkdir d: Create a directory. This will create a subdirectory named d in the current directory
-
     if(_check_duiplicate(name)){
         Error("cmd_mk: file %s already exists", name);
         return E_ERROR;
     }
 
+    inode *tmp = iget(curDir.inum);
+    if(tmp == NULL){
+        Error("cmd_mkdir: current directory Error, cannot be found");
+        return E_ERROR;
+    }
+    ushort res = _permission_check(tmp);
+    // require write+execute on directory
+    if((res & (WRITE|EXECUTE)) != (WRITE|EXECUTE)){
+        Error("cmd_mkdir: permission denied");
+        iput(tmp);
+        return E_ERROR;
+    }
+    iput(tmp);
+    /*permission check on creating sub directory*/
 
     inode *subdir = ialloc(T_DIR);
     if(subdir == NULL){
         Error("cmd_mkdir: subdir allocation failed");
         return E_ERROR;
     }
+    subdir->owner = curUser;
+    subdir->modTime = time(NULL);
     subdir->permission = mode;
     strcpy(subdir->name,name);
     
@@ -146,6 +279,13 @@ int cmd_rm(char *name) {
         Error("cmd_rm: dir cannot be found");
         return E_ERROR;
     }
+    ushort dir_perm = _permission_check(dir);
+    if(!(dir_perm & WRITE)){
+        Error("cmd_rm: permission denied");
+        iput(dir);
+        return E_ERROR;
+    } /*permission check on current directory*/
+
     uint *links = malloc(dir->fileSize);
     readi(dir, (uchar *)links, 0, dir->fileSize);
     uint total = dir->fileSize / sizeof(uint);
@@ -161,6 +301,16 @@ int cmd_rm(char *name) {
         }
         if(sub->type == T_FILE && strcmp(sub->name, name) == 0){
             //found the file to delete
+            ushort file_perm = _permission_check(sub);
+            if(!(file_perm & WRITE)){
+                Error("cmd_rm: permission denied");
+                iput(sub);
+                free(links);
+                iput(dir);
+                return E_ERROR;
+            } /*permission check on deleting file*/
+
+            //remove the file
             dir->linkCount--;
             links[i] = 0;
             targetPos = i;
@@ -306,6 +456,14 @@ int cmd_cd(char *name) {
         Error("cmd_cd: path %s not found", name);
         return E_ERROR;
     }
+
+    ushort res = _permission_check(dst);
+    if(!(res & EXECUTE)){
+        Error("cmd_cd: cannot cd to target directory %s", name);
+        iput(dst);
+        return E_ERROR;
+    } /*permission check on changing directory*/
+
     curDir.inum = dst->inum;
     curDir.type = dst->type;
     assert(curDir.type == T_DIR);
@@ -402,13 +560,32 @@ int cmd_rmdir(char *name) {
         return E_ERROR;
     }
     
-    inode *cur = iget(curDir.inum);
+    inode *cur = iget(curDir.inum); //获取当前所在的目录
+    ushort curDir_perm = _permission_check(cur);
+    if(!(curDir_perm & WRITE)){
+        Error("cmd_rmdir: Cannot remove diretory under current directory %s", cur->name);
+        iput(cur);
+        iput(target);
+        return E_ERROR;
+    } /*permission check on current directory*/
+
+
     uint *links = malloc(cur->fileSize);
     readi(cur, (uchar *)links, 0, cur->fileSize);
     uint total = cur->fileSize / sizeof(uint);
     uint targetPos = 0;
     for(int i=2;i<total;i++){
         if(links[i] == target->inum){
+            ushort target_perm = _permission_check(target);
+            if(!(target_perm & WRITE)){
+                Error("cmd_rmdir: Cannot remove directory %s", name);
+                free(links);
+                iput(cur);
+                iput(target);
+                return E_ERROR;
+            } /*permission check on deleting directory*/
+
+            //remove the directory
             targetPos = i;
             links[i] = 0;
             break;
@@ -423,6 +600,7 @@ int cmd_rmdir(char *name) {
     cur->fileSize -= sizeof(uint);
     cur->modTime = time(NULL);
 
+    free(links);
     iput(cur); //remove the link to target dir from its parent
     _rmdir_helper(target); //delete the target dir and its contents
     return E_SUCCESS;
@@ -438,7 +616,14 @@ int cmd_ls(entry **entries, int *n) {
         Error("cmd_ls: dir cannot be found");
         return E_ERROR;
     }
+    ushort dir_perm = _permission_check(dir);
+    if(!(dir_perm & READ)){
+        Error("cmd_ls: permission denied");
+        iput(dir);
+        return E_ERROR;
+    } /*permission check on current directory*/
 
+    assert(dir->type == T_DIR);
     uint *links = (uint *)malloc(dir->fileSize);
     readi(dir, (uchar *)links, 0, dir->fileSize);
     uint total = dir->fileSize / sizeof(uint);
@@ -480,7 +665,7 @@ int cmd_ls(entry **entries, int *n) {
 int cmd_cat(char *name, uchar **buf, uint *len) {
     inode *cur = iget(curDir.inum);
     if(cur == NULL){
-        Error("cmd_w: curDir cannot be found");
+        Error("cmd_cat: curDir cannot be found");
         return E_ERROR;
     }
     uint *links = (uint *)malloc(cur->fileSize);
@@ -492,7 +677,7 @@ int cmd_cat(char *name, uchar **buf, uint *len) {
     for(int i=2;i<total;i++){
         inode *sub = iget(links[i]);
         if(sub == NULL){
-            Error("cmd_w: file cannot be NULL");
+            Error("cmd_cat: file cannot be NULL");
             free(links);
             return E_ERROR;
         }
@@ -506,9 +691,15 @@ int cmd_cat(char *name, uchar **buf, uint *len) {
     if(ip == NULL){
         Error("cmd_w: file %s not found", name);
         return E_ERROR;
-    }
+    }  //after above , ip the file inode
+    ushort file_perm = _permission_check(ip);
+    if(!(file_perm & READ)){
+        Error("cmd_cat: permission denied");
+        iput(ip);
+        return E_ERROR;
+    } /*permission check on reading file*/
 
-
+    assert(ip->type == T_FILE);
     if (!ip) {
         Error("cmd_cat: file %s not found", name);
         return E_ERROR;
@@ -571,11 +762,14 @@ int cmd_w(char *name, uint len, const char *data) {
         return E_ERROR;
     }
 
-    if(!ip){
-        Error("cmd_w: file %s not found", name);
+    ushort file_perm = _permission_check(ip);
+    if(!(file_perm & WRITE)){
+        Error("cmd_w: permission denied");
+        iput(ip);
         return E_ERROR;
-    }
+    } /*permission check on writing file*/
 
+    assert(ip->type == T_FILE);
     if(len < ip->fileSize){
         //truncate the file;
         uchar *buf = (uchar *)malloc(ip->fileSize);
@@ -638,6 +832,14 @@ int cmd_i(char *name, uint pos, uint len, const char *data) {
     }
     //after above , ip the file inode
 
+    ushort file_perm = _permission_check(ip);
+    if(!(file_perm & WRITE)){
+        Error("cmd_i: permission denied");
+        iput(ip);
+        return E_ERROR;
+    } /*permission check on writing file*/
+
+    assert(ip->type == T_FILE);
     if(pos > ip->fileSize){
         uchar *buf = (uchar *)malloc(ip->fileSize + len);
         memset(buf, 0 , ip->fileSize + len);
@@ -699,6 +901,14 @@ int cmd_d(char *name, uint pos, uint len) {
     }
     //after above , ip the file inode
 
+    ushort file_perm = _permission_check(ip);
+    if(!(file_perm & WRITE)){
+        Error("cmd_d: permission denied");
+        iput(ip);
+        return E_ERROR;
+    } /*permission check on writing file*/
+
+    assert(ip->type == T_FILE);
     if(pos >= ip->fileSize){
         Error("cmd_d: pos %d is larger than file size %d", pos, ip->fileSize);
         iput(ip);
@@ -730,6 +940,29 @@ int cmd_d(char *name, uint pos, uint len) {
 }
 
 int cmd_login(int auid) {
+    for(int i=0;i<MAXUSERS;i++){
+        if(sb.users[i].uid == auid){
+            fprintf(stderr,"User %d already logged in\n", auid);
+            return E_ERROR;
+        }
+        if(sb.users[i].uid == 0){
+            sb.users[i].uid = auid;
+            sb.users[i].cwd = sb.root;
+            fprintf(stderr,"User %d logged in\n", auid);
+            return E_SUCCESS;
+        }
+    } 
     return E_SUCCESS;
 }
 
+void cmd_exit(uint u){
+    exit_block();
+    for(int i=0;i<MAXUSERS;i++){
+        if(sb.users[i].uid == u){
+            sb.users[i].uid = 0;
+            fprintf(stderr,"User %d logged out\n", u);
+            break;
+        }
+    }
+    exit(0);
+}

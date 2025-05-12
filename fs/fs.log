@@ -1,46 +1,15 @@
-[WARN] initializing disk...
-[WARN] mounting disk...:
-[WARN] mounting disk...:
+[INFO] Disk initialized: tankman.img, 50 Cylinders, 50 Sectors per cylinder
+[WARN] Disk size mismatch: 64512 != 2500, reinitializing disk
 [WARN] cmd_f: file system uninitialized
-[WARN] mounting disk...:
-[WARN] cmd_f: file system uninitialized
-[WARN] mounting disk...:
-[WARN] cmd_f: file system uninitialized
-[WARN] mounting disk...:
-[WARN] cmd_f: file system uninitialized
-[WARN] mounting disk...:
-[WARN] cmd_f: file system uninitialized
-[WARN] mounting disk...:
-[WARN] cmd_f: file system uninitialized
-[WARN] mounting disk...:
-[WARN] cmd_f: file system uninitialized
-[WARN] mounting disk...:
-[WARN] cmd_f: file system uninitialized
-[WARN] mounting disk...:
-[WARN] cmd_f: file system uninitialized
-[WARN] mounting disk...:
-[WARN] cmd_f: file system uninitialized
-[ERROR] cmd_mk: file testfile already exists
-[WARN] mounting disk...:
-[WARN] cmd_f: file system uninitialized
-[WARN] mounting disk...:
-[WARN] cmd_f: file system uninitialized
-[ERROR] cmd_mk: file mydir already exists
-[WARN] mounting disk...:
-[WARN] cmd_f: file system uninitialized
-[WARN] mounting disk...:
-[WARN] cmd_f: file system uninitialized
-[WARN] mounting disk...:
-[WARN] cmd_f: file system uninitialized
-[ERROR] rm: file ghost not found
-[WARN] mounting disk...:
-[WARN] cmd_f: file system uninitialized
-[ERROR] cmd_rmdir: directory mydir is not empty
-[WARN] mounting disk...:
-[WARN] cmd_f: file system uninitialized
-[WARN] mounting disk...:
-[WARN] cmd_f: file system uninitialized
-[WARN] mounting disk...:
-[WARN] cmd_f: file system uninitialized
-[WARN] mounting disk...:
-[WARN] cmd_f: file system uninitialized
+[INFO] format : Success
+[INFO] ls : Success
+[INFO] mk : Success
+[INFO] mk : Success
+[INFO] ls : Success
+[INFO] mkdir : Success
+[INFO] cd : Success
+[INFO] mk : Success
+[INFO] w : Success
+[INFO] ls : Success
+[INFO] cat : Success
+[ERROR] e : Invalid arguments
