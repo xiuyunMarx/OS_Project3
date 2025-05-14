@@ -1,15 +1,34 @@
+[ERROR] iget: iNode 0 does not exist
+[ERROR] _fetch_entry: fetching inode failed
+[ERROR] user 0 : cwd not found
+[INFO] login : Success
+[ERROR] iget: iNode 0 does not exist
+[ERROR] _fetch_entry: fetching inode failed
+[ERROR] user 1 : cwd not found
 [INFO] Disk initialized: tankman.img, 50 Cylinders, 50 Sectors per cylinder
-[WARN] Disk size mismatch: 64512 != 2500, reinitializing disk
 [WARN] cmd_f: file system uninitialized
 [INFO] format : Success
+[ERROR] user 1 : Not Found
+[ERROR] iget: iNode 0 does not exist
+[ERROR] _fetch_entry: fetching inode failed
+[ERROR] user 0 : cwd not found
+[INFO] login : Success
 [INFO] ls : Success
 [INFO] mk : Success
-[INFO] mk : Success
+[ERROR] user 1 : please login first
 [INFO] ls : Success
-[INFO] mkdir : Success
-[INFO] cd : Success
-[INFO] mk : Success
+[ERROR] user 1 : Not Found
 [INFO] w : Success
-[INFO] ls : Success
+[ERROR] user 1 : please login first
 [INFO] cat : Success
+[ERROR] user 1 : Not Found
+[ERROR] user 1 : please login first
+[INFO] mkdir : Success
+[ERROR] user 1 : Not Found
+[ERROR] user 1 : please login first
+[INFO] cd : Success
+[ERROR] user 1 : Not Found
+[INFO] ls : Success
+[ERROR] cmd_cd: cannot cd to target directory d
+[ERROR] cd : Failed to change directory
 [ERROR] e : Invalid arguments

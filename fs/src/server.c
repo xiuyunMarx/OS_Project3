@@ -1,15 +1,23 @@
+#include <stdbool.h>
 #include <stdio.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "log.h"
-#include "tcp_buffer.h"
-#include "tcp_utils.h"
+#include "../../include/log.h"
+#include "../../include/tcp_buffer.h"
+#include "../../include/tcp_utils.h"
 #include "../include/fs.h"
 #include "../include/common.h"
 #include "assert.h"
 #define BUFSIZE 1024
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+struct Mapping{
+    int client_id;
+    int uid;
+}users_map[MAXUSERS];
 
 int handle_f(tcp_buffer *wb, int argc, char *args[], char *reply){
     static char buf[BUFSIZE];
@@ -30,7 +38,7 @@ int handle_f(tcp_buffer *wb, int argc, char *args[], char *reply){
 
     int ret = cmd_f(ncyl, nsec);
     if(ret != E_SUCCESS){
-        sprintf(buf, "format : Failed to format\n");
+        sprintf(buf, "format : format failed, only Root user can format\n");
         Error("format : Failed to format");
         reply_with_no(wb, buf, strlen(buf) + 1);
         return -1;
@@ -337,7 +345,7 @@ int handle_e(tcp_buffer *wb, int argc, char *args[], char *reply){
 }
 
 int handle_login(tcp_buffer *wb, int argc, char *args[], char *reply){
-     char buf[BUFSIZE];
+    char buf[BUFSIZE];
     if(argc != 2){
         sprintf(buf, "Usage: login <uid>\n");
         Error("login : Invalid arguments");
@@ -346,6 +354,7 @@ int handle_login(tcp_buffer *wb, int argc, char *args[], char *reply){
     }
 
     int uid = atoi(args[1]);
+
     int ret = cmd_login(uid);
     if(ret != E_SUCCESS){
         sprintf(buf, "login : Failed to login\n");
@@ -369,10 +378,7 @@ static struct {
 
 #define NCMD (sizeof(cmd_table) / sizeof(cmd_table[0]))
 
-struct Mapping{
-    int client_id;
-    int uid;
-}users_map[MAXUSERS];
+
 
 
 void on_connection(int id) {
@@ -386,9 +392,23 @@ void on_connection(int id) {
     }
 }
 
+uint fetch_uid(int id){
+    uint ret = 0;
+    for(int i = 0; i<MAXUSERS ;i++){
+        if(users_map[i].client_id == id){
+            ret = users_map[i].uid;
+            break;
+        }
+    }
+    return ret;
+}
 
 int on_recv(int id, tcp_buffer *wb, char *msg, int len) {
+    pthread_mutex_lock(&mutex);
+
     // 1. 去掉末尾的换行符
+    uint client_uid = fetch_uid(id);
+
     if (len > 0 && msg[len - 1] == '\n') {
         msg[len - 1] = '\0';
     }
@@ -404,19 +424,38 @@ int on_recv(int id, tcp_buffer *wb, char *msg, int len) {
 
     // 如果没有任何参数，直接返回
     if (argc == 0) {
+        pthread_mutex_unlock(&mutex);
         return 0;
     }
 
     // 打印收到的命令（仅打印 argv[0]，而不是原始 msg）
     fprintf(stderr, "Received command: %s\n", argv[0]);
 
+    if(client_uid == 0 && strcmp(argv[0], "login") != 0){
+        const char err[] = "Please login first";
+        buffer_append(wb, err, sizeof(err));
+        pthread_mutex_unlock(&mutex);
+        return 0;
+    }
+
+
     // 3. 查表分发
     int ret = 1;  // 1 表示 Unknown
     for (int i = 0; i < NCMD; i++) {
+        if(strcmp(argv[0], "login") == 0){
+            for(int j=0;j<MAXUSERS;j++){
+                if(users_map[j].uid == 0){ //this slot is empty
+                    users_map[j].client_id = id;
+                    users_map[j].uid = atoi(argv[1]);
+                    break;
+                }
+            }
+        }
+
         if (strcmp(argv[0], cmd_table[i].name) == 0) {
-            user_init(uint uid)
+            user_init(client_uid);
             ret = cmd_table[i].handler(wb, argc, argv, msg);
-            user_end(uint uid)
+            user_end(client_uid);
             break;
         }
     }
@@ -429,7 +468,7 @@ int on_recv(int id, tcp_buffer *wb, char *msg, int len) {
         const char err[] = "Error";
         buffer_append(wb, err, sizeof(err));
     }
-
+    pthread_mutex_unlock(&mutex);
     return 0;
 }
 
@@ -459,7 +498,7 @@ int main(int argc, char *argv[]) {
         }
     }
     // command
-    tcp_server server = server_init(port, 1, on_connection, on_recv, cleanup);
+    tcp_server server = server_init(port, 20, on_connection, on_recv, cleanup);
         //端口号, 线程数, 传入三个函数, 分别是: 有一个客户端连接时执行, server收到客户端的消息时的处理函数, 客户端断开连接时的处理函数
     server_run(server);
 

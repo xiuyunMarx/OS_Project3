@@ -956,6 +956,13 @@ int cmd_login(int auid) {
 }
 
 void cmd_exit(uint u){
+    uchar *buf = (uchar *)malloc(BSIZE);
+    memset(buf, 0, BSIZE);
+    memcpy(buf, &sb, sizeof(superblock));
+    write_block(0, buf);
+    free(buf);
+
+
     exit_block();
     for(int i=0;i<MAXUSERS;i++){
         if(sb.users[i].uid == u){
@@ -964,5 +971,4 @@ void cmd_exit(uint u){
             break;
         }
     }
-    exit(0);
 }
