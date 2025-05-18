@@ -16,7 +16,7 @@
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 struct Mapping{
     int client_id;
-    int uid;
+    int uid; //file system user id
 }users_map[MAXUSERS];
 
 int handle_f(tcp_buffer *wb, int argc, char *args[], char *reply){
@@ -380,35 +380,35 @@ static struct {
 
 
 
-
 void on_connection(int id) {
     // some code that are executed when a new client is connected
     for(int i =0; i<MAXUSERS ;i++){
-        if(users_map[i].client_id == 0){
+        if(users_map[i].client_id == -1){
             users_map[i].client_id = id;
-            users_map[i].uid = 0; // -1 means not logged in
+            users_map[i].uid = -1; // -1 means not logged in
             break;
         }
     }
 }
 
-uint fetch_uid(int id){
+int fetch_uid(int id){
     uint ret = 0;
     for(int i = 0; i<MAXUSERS ;i++){
         if(users_map[i].client_id == id){
             ret = users_map[i].uid;
-            break;
+            return ret;
         }
     }
-    return ret;
+    fprintf(stderr, "client Not logged in\n");
+    return -1;
 }
 
 int on_recv(int id, tcp_buffer *wb, char *msg, int len) {
     pthread_mutex_lock(&mutex);
 
-    // 1. 去掉末尾的换行符
-    uint client_uid = fetch_uid(id);
+    int client_uid = fetch_uid(id);
 
+    // 1. 去掉末尾的换行符
     if (len > 0 && msg[len - 1] == '\n') {
         msg[len - 1] = '\0';
     }
@@ -431,42 +431,43 @@ int on_recv(int id, tcp_buffer *wb, char *msg, int len) {
     // 打印收到的命令（仅打印 argv[0]，而不是原始 msg）
     fprintf(stderr, "Received command: %s\n", argv[0]);
 
-    if(client_uid == 0 && strcmp(argv[0], "login") != 0){
+    if(client_uid < 0 && strcmp(argv[0], "login") != 0){
         const char err[] = "Please login first";
         buffer_append(wb, err, sizeof(err));
         pthread_mutex_unlock(&mutex);
         return 0;
     }
 
-
     // 3. 查表分发
+    char *none;
     int ret = 1;  // 1 表示 Unknown
     for (int i = 0; i < NCMD; i++) {
         if(strcmp(argv[0], "login") == 0){
-            for(int j=0;j<MAXUSERS;j++){
-                if(users_map[j].uid == 0){ //this slot is empty
-                    users_map[j].client_id = id;
+            // update uid for this connection's slot
+            for(int j = 0; j < MAXUSERS; j++){
+                if(users_map[j].client_id == id){
                     users_map[j].uid = atoi(argv[1]);
                     break;
                 }
             }
+            ret = handle_login(wb, argc, argv, none);
+            break;
         }
-
+        
         if (strcmp(argv[0], cmd_table[i].name) == 0) {
             user_init(client_uid);
-            ret = cmd_table[i].handler(wb, argc, argv, msg);
+            fprintf(stderr, "current file system user: %d\n", client_uid);
+            ret = cmd_table[i].handler(wb, argc, argv, none);
             user_end(client_uid);
             break;
         }
     }
 
-    // 4. 处理未知或出错情况
-    if (ret == 1) {
-        const char unk[] = "Unknown command";
-        buffer_append(wb, unk, sizeof(unk));
-    } else if (ret < 0) {
-        const char err[] = "Error";
-        buffer_append(wb, err, sizeof(err));
+    if(ret != 0){
+        fprintf(stderr, "error encountered: %s\n", argv[0]);
+        // memset(wb->buf, 0, BUFSIZE);
+    }else{
+        // memset(wb->buf, 0, BUFSIZE);
     }
     pthread_mutex_unlock(&mutex);
     return 0;
@@ -476,8 +477,8 @@ void cleanup(int id) {
     // some code that are executed when a client is disconnected
     for(int i =0; i<MAXUSERS ;i++){
         if(users_map[i].client_id == id){
-            users_map[i].client_id = 0;
-            users_map[i].uid = 0; // wipe out information
+            users_map[i].client_id = -1;
+            users_map[i].uid = -1; // wipe out information
             break;
         }
     }
@@ -497,7 +498,10 @@ int main(int argc, char *argv[]) {
             return -1;
         }
     }
-    // command
+    for(int i=0;i<MAXUSERS;i++){
+        users_map[i].client_id = -1;
+        users_map[i].uid = -1;
+    }
     tcp_server server = server_init(port, 20, on_connection, on_recv, cleanup);
         //端口号, 线程数, 传入三个函数, 分别是: 有一个客户端连接时执行, server收到客户端的消息时的处理函数, 客户端断开连接时的处理函数
     server_run(server);

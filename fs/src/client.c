@@ -5,14 +5,18 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "tcp_utils.h"
+#include "../../include/tcp_buffer.h"
+#include "../../include/tcp_utils.h"
 
 int main(int argc, char *argv[]) {
+    int port;
     if (argc < 2) {
         fprintf(stderr, "Usage: %s <Port>\n", argv[0]);
-        exit(EXIT_FAILURE);
+        // exit(EXIT_FAILURE);
+        port = 1145;
+    }else {
+        port = atoi(argv[1]);
     }
-    int port = atoi(argv[1]);
     tcp_client client = client_init("localhost", port);
     static char buf[4096];
     while (1) {
