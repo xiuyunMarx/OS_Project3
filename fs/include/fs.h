@@ -34,7 +34,7 @@ int cmd_i(char *name, uint pos, uint len, const char *data);
 int cmd_d(char *name, uint pos, uint len);
 
 int cmd_login(int auid);
-
+bool is_formated();
 int user_init(uint uid);
 int user_end(uint uid);
 void cmd_exit(uint u);

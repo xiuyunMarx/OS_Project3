@@ -103,7 +103,7 @@ int handle_mkdir(tcp_buffer *wb, int argc, char *args[], char *reply){
 }
 
 int handle_rm(tcp_buffer *wb, int argc, char *args[], char *reply){
-     char buf[BUFSIZE];
+    char buf[BUFSIZE];
     if(argc != 2){
         sprintf(buf, "Usage: rm <filename>\n");
         Error("rm : Invalid arguments");
@@ -404,8 +404,6 @@ int fetch_uid(int id){
 }
 
 int on_recv(int id, tcp_buffer *wb, char *msg, int len) {
-    pthread_mutex_lock(&mutex);
-
     int client_uid = fetch_uid(id);
 
     // 1. 去掉末尾的换行符
@@ -424,51 +422,70 @@ int on_recv(int id, tcp_buffer *wb, char *msg, int len) {
 
     // 如果没有任何参数，直接返回
     if (argc == 0) {
-        pthread_mutex_unlock(&mutex);
+        reply_with_no(wb, "No command received\n", 20);
         return 0;
     }
 
-    // 打印收到的命令（仅打印 argv[0]，而不是原始 msg）
+    // 打印收到的命令
     fprintf(stderr, "Received command: %s\n", argv[0]);
 
     if(client_uid < 0 && strcmp(argv[0], "login") != 0){
         const char err[] = "Please login first";
-        buffer_append(wb, err, sizeof(err));
+        reply_with_no(wb, err, strlen(err) + 1);
+        return 0;
+    }
+
+    pthread_mutex_lock(&mutex); //lock the file system
+    // 3. 查表分发
+    char *none;
+    int ret = 1;  
+
+    if(strcmp(argv[0], "login") == 0){
+        // update uid for this connection's slot
+        for(int j = 0; j < MAXUSERS; j++){
+            if(users_map[j].client_id == id){
+                users_map[j].uid = atoi(argv[1]);
+                break;
+            }
+        }
+        ret = handle_login(wb, argc, argv, none);
+        pthread_mutex_unlock(&mutex);
+        return 0;
+    }
+    
+    if(strcmp(argv[0],"f") == 0){
+        if(client_uid != 1){
+            const char err[] = "Only root can format the file system";
+            reply_with_no(wb, err, strlen(err) + 1);
+            pthread_mutex_unlock(&mutex);
+            return 0;
+        }
+
+        ret = handle_f(wb, argc, argv, none);
         pthread_mutex_unlock(&mutex);
         return 0;
     }
 
-    // 3. 查表分发
-    char *none;
-    int ret = 1;  // 1 表示 Unknown
     for (int i = 0; i < NCMD; i++) {
-        if(strcmp(argv[0], "login") == 0){
-            // update uid for this connection's slot
-            for(int j = 0; j < MAXUSERS; j++){
-                if(users_map[j].client_id == id){
-                    users_map[j].uid = atoi(argv[1]);
-                    break;
-                }
-            }
-            ret = handle_login(wb, argc, argv, none);
-            break;
-        }
-        
         if (strcmp(argv[0], cmd_table[i].name) == 0) {
+            if(is_formated() == false){
+                const char err[] = "File system not formated, formate first";
+                reply_with_no(wb, err, strlen(err) + 1);
+                pthread_mutex_unlock(&mutex);
+                return 0;
+            }
+
             user_init(client_uid);
-            fprintf(stderr, "current file system user: %d\n", client_uid);
             ret = cmd_table[i].handler(wb, argc, argv, none);
             user_end(client_uid);
-            break;
+            pthread_mutex_unlock(&mutex);
+            return 0;
         }
     }
 
-    if(ret != 0){
-        fprintf(stderr, "error encountered: %s\n", argv[0]);
-        // memset(wb->buf, 0, BUFSIZE);
-    }else{
-        // memset(wb->buf, 0, BUFSIZE);
-    }
+    char err[BUFSIZE];
+    sprintf(err, "Unknown command: %s\n", argv[0]);
+    reply_with_no(wb, err, strlen(err) + 1);
     pthread_mutex_unlock(&mutex);
     return 0;
 }

@@ -1,36 +1,9 @@
 [INFO] login : Success
-[ERROR] iget: iNode 0 does not exist
-[ERROR] _fetch_entry: fetching inode failed
-[ERROR] user 1 : cwd not found
-[INFO] Disk initialized: tankman.img, 11 Cylinders, 11 Sectors per cylinder
-[WARN] Disk size mismatch: 2500 != 121, reinitializing disk
+[INFO] Disk initialized: tankman.img, 50 Cylinders, 50 Sectors per cylinder
+[WARN] Disk size mismatch: 55 != 2500, reinitializing disk
 [WARN] cmd_f: file system uninitialized
 [INFO] format : Success
-[ERROR] user 1 : Not Found
 [INFO] login : Success
-[ERROR] cmd_f: permisssion denied, only ROOT can format the disk
-[ERROR] format : Failed to format
-[INFO] ls : Success
-[ERROR] user 1 : please login first
-[INFO] mk : Success
-[ERROR] user 1 : Not Found
 [ERROR] user 1 : please login first
 [INFO] ls : Success
 [ERROR] user 1 : Not Found
-[INFO] w : Success
-[ERROR] user 1 : please login first
-[INFO] cat : Success
-[ERROR] user 1 : Not Found
-[ERROR] user 1 : please login first
-[ERROR] cmd_w: file f2 not found
-[ERROR] cat : Failed to read file
-[ERROR] user 1 : Not Found
-[INFO] cat : Success
-[INFO] mkdir : Success
-[ERROR] user 1 : please login first
-[INFO] ls : Success
-[ERROR] user 1 : Not Found
-[ERROR] user 1 : please login first
-[INFO] cd : Success
-[ERROR] user 1 : Not Found
-[INFO] ls : Success

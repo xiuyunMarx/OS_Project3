@@ -20,6 +20,13 @@ void sbinit() {
     curUser  = 1;
 }
 
+bool is_formated() {
+    if (sb.root == 0 || sb.size == 0) {
+        return false;
+    }
+    return true;
+}
+
 entry _fetch_entry(uint inum){
     inode *dir = iget(inum);
     entry ret;
@@ -43,11 +50,11 @@ int user_init(uint uid){
     for(int i=0;i<MAXUSERS;i++){
         if(sb.users[i].uid == uid){
             backUp = curDir;
-            curDir = _fetch_entry(sb.users[i].cwd);
-            if(curDir.inum == 0){
-                Error("user %d : cwd not found", uid);
-                return E_ERROR;
+            if(sb.users[i].cwd == 0){
+                sb.users[i].cwd = sb.root;
+                Warn("user %d : no cwd, set to root", uid);
             }
+            curDir = _fetch_entry(sb.users[i].cwd);
             curUser = uid;
             return E_SUCCESS;
         }
