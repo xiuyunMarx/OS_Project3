@@ -1,4 +1,4 @@
-#include "fs.h"
+#include "../include/fs.h"
 
 #include <assert.h>
 #include <stdbool.h>
@@ -7,10 +7,10 @@
 #include <sys/types.h>
 #include <time.h>
 
-#include "block.h"
+#include "../include/block.h"
 #include "../../include/log.h"
-#include "common.h"
-#include "inode.h"
+#include "../include/common.h"
+#include "../include/inode.h"
 
 entry curDir;
 void sbinit() {
@@ -146,7 +146,7 @@ int cmd_rm(char *name) {
         Error("cmd_rm: dir cannot be found");
         return E_ERROR;
     }
-    uint *links = malloc(dir->fileSize);
+    uint *links = (uint*)malloc(dir->fileSize);
     readi(dir, (uchar *)links, 0, dir->fileSize);
     uint total = dir->fileSize / sizeof(uint);
 
@@ -201,7 +201,7 @@ int _ls_entries(inode *dir, entry **entries, int *n) {
         return E_ERROR;
     }
     uint total_bytes = dir->fileSize;
-    uint *links = malloc(total_bytes);
+    uint *links = (uint*)malloc(total_bytes);
     if (!links) {
         Error("cmd_ls: malloc links failed");
         return E_ERROR;
@@ -209,7 +209,7 @@ int _ls_entries(inode *dir, entry **entries, int *n) {
     readi(dir, (uchar*)links, 0, total_bytes);
     uint total = total_bytes / sizeof(uint);
     *n = total > 2 ? total - 2 : 0;
-    *entries = malloc((*n) * sizeof(entry));
+    *entries = (entry *)malloc((*n) * sizeof(entry));
     if (!*entries) {
         Error("cmd_ls: malloc entries failed");
         free(links);
@@ -257,7 +257,7 @@ inode *_path_finder(const char *name) {
         if (strcmp(tok, "..")==0) {
             // 统一用 fileSize 方式读整个目录块，然后取 links[1]
             uint total_bytes = ptr->fileSize;
-            uint *links = malloc(total_bytes);
+            uint *links = (uint* )malloc(total_bytes);
             readi(ptr, (uchar*)links, 0, total_bytes);
             iput(ptr);
             ptr = iget(links[1]);
@@ -325,7 +325,7 @@ bool _has_file(inode *dir){
         return false;
     }
 
-    uint *links = malloc(dir->fileSize);
+    uint *links =(uint* ) malloc(dir->fileSize);
     readi(dir, (uchar *)links, 0, dir->fileSize);
     uint total = dir->fileSize / sizeof(uint);
     bool hasFile = false; 
@@ -356,7 +356,7 @@ int _rmdir_helper(inode *dir){
         Error("cmd_rmdir: dir cannot be found");
         return E_ERROR;
     }
-    uint *links = malloc(dir->fileSize);
+    uint *links = (uint*)malloc(dir->fileSize);
     readi(dir, (uchar *)links, 0, dir->fileSize);
     uint total = dir->fileSize / sizeof(uint);
 
@@ -403,7 +403,7 @@ int cmd_rmdir(char *name) {
     }
     
     inode *cur = iget(curDir.inum);
-    uint *links = malloc(cur->fileSize);
+    uint *links = (uint* )malloc(cur->fileSize);
     readi(cur, (uchar *)links, 0, cur->fileSize);
     uint total = cur->fileSize / sizeof(uint);
     uint targetPos = 0;
@@ -445,7 +445,7 @@ int cmd_ls(entry **entries, int *n) {
 
     *n = total - 2; // exclude "." and ".."
     // allocate array for entries
-    *entries = malloc((*n) * sizeof(entry));
+    *entries = (entry *)malloc((*n) * sizeof(entry));
     if (*entries == NULL) {
         Error("cmd_ls: malloc entries failed");
         free(links);
@@ -519,7 +519,7 @@ int cmd_cat(char *name, uchar **buf, uint *len) {
         return E_ERROR;
     }
     *len = ip->fileSize;
-    *buf = malloc(*len);
+    *buf = (uchar *)malloc(*len);
     if (*buf == NULL) {
         iput(ip);
         Error("cmd_cat: malloc failed");
