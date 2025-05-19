@@ -56,6 +56,7 @@ int user_init(uint uid){
             }
             curDir = _fetch_entry(sb.users[i].cwd);
             curUser = uid;
+            Log("User %d : Found, cwd = %s ", uid, curDir.name);
             return E_SUCCESS;
         }
     }
@@ -125,6 +126,8 @@ int cmd_f(int ncyl, int nsec) {
         Error("cmd_f: permisssion denied, only ROOT can format the disk");
         return E_ERROR;
     }
+    superblock tmp_sb;
+    memcpy(&tmp_sb, &sb, sizeof(superblock)); //backup user information
 
     _mount_disk(ncyl, nsec);
     inode *root ;
@@ -149,6 +152,7 @@ int cmd_f(int ncyl, int nsec) {
             return E_ERROR;
         }
     }
+    memcpy(&sb.users[0], &tmp_sb.users[0], sizeof(tmp_sb.users)); //restore user information
 
     strcpy(curDir.name, root->name);
     curDir.type = root->type;

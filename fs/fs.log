@@ -1,9 +1,31 @@
 [INFO] login : Success
-[INFO] Disk initialized: tankman.img, 50 Cylinders, 50 Sectors per cylinder
-[WARN] Disk size mismatch: 55 != 2500, reinitializing disk
+[INFO] Disk initialized: tankman.img, 55 Cylinders, 55 Sectors per cylinder
+[WARN] Disk size mismatch: 64512 != 3025, reinitializing disk
 [WARN] cmd_f: file system uninitialized
 [INFO] format : Success
-[INFO] login : Success
-[ERROR] user 1 : please login first
+[WARN] user 1 : no cwd, set to root
 [INFO] ls : Success
-[ERROR] user 1 : Not Found
+[INFO] ls : Success
+[INFO] login : Success
+[INFO] mk : Success
+[INFO] ls : Success
+[INFO] mkdir : Success
+[INFO] cd : Success
+[INFO] ls : Success
+[ERROR] cmd_cd: directory d not found
+[ERROR] cmd_cd: path d not found
+[ERROR] cd : Failed to change directory
+[INFO] ls : Success
+[INFO] ls : Success
+[INFO] ls : Success
+[INFO] ls : Success
+[INFO] cd : Success
+[INFO] ls : Success
+[INFO] mkdir : Success
+[INFO] ls : Success
+[INFO] ls : Success
+[INFO] cd : Success
+[INFO] ls : Success
+[INFO] cd : Success
+[INFO] ls : Success
+[INFO] cd : Success

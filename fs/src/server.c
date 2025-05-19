@@ -499,6 +499,11 @@ void cleanup(int id) {
             break;
         }
     }
+    uchar *buf = (uchar *)malloc(BSIZE);
+    memcpy(buf, &sb, sizeof(superblock));
+    write_block(0, buf);
+    free(buf);
+    
 }
 
 FILE *log_file;
