@@ -38,4 +38,7 @@ bool is_formated();
 int user_init(uint uid);
 int user_end(uint uid);
 void cmd_exit(uint u);
+
+int cd_to_home(int auid);
+int cmd_pwd(char *buf, int buflen);
 #endif

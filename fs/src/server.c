@@ -368,13 +368,23 @@ int handle_login(tcp_buffer *wb, int argc, char *args[], char *reply){
         return 0;
     }
 }
+
+int handle_pwd(tcp_buffer *wb, int argc, char *args[], char *reply){
+    char buf[BSIZE];
+    int ret = cmd_pwd(buf, sizeof(buf));
+    if (ret != E_SUCCESS) {
+        reply_with_no(wb, "pwd failed\n", 11);
+    } else {
+        reply_with_yes(wb, buf, strlen(buf)+1);
+    }
+}    
 static struct {
     const char *name;
     int (*handler)(tcp_buffer *wb, int argc, char *args[], char *reply);
 } cmd_table[] = {{"f", handle_f},        {"mk", handle_mk},       {"mkdir", handle_mkdir}, {"rm", handle_rm},
                  {"cd", handle_cd},      {"rmdir", handle_rmdir}, {"ls", handle_ls},       {"cat", handle_cat},
                  {"w", handle_w},        {"i", handle_i},         {"d", handle_d},         {"e", handle_e},
-                 {"login", handle_login}};
+                 {"login", handle_login}, {"pwd", handle_pwd}};
 
 #define NCMD (sizeof(cmd_table) / sizeof(cmd_table[0]))
 
@@ -474,7 +484,6 @@ int on_recv(int id, tcp_buffer *wb, char *msg, int len) {
                 pthread_mutex_unlock(&mutex);
                 return 0;
             }
-
             user_init(client_uid);
             ret = cmd_table[i].handler(wb, argc, argv, none);
             user_end(client_uid);
@@ -491,10 +500,19 @@ int on_recv(int id, tcp_buffer *wb, char *msg, int len) {
 }
 
 void cleanup(int id) {
+    pthread_mutex_lock(&mutex);
     // some code that are executed when a client is disconnected
     for(int i =0; i<MAXUSERS ;i++){
         if(users_map[i].client_id == id){
             users_map[i].client_id = -1;
+            for(int j=0;j<MAXUSERS;j++){
+                if(sb.users[j].uid == users_map[i].uid){
+                    sb.users[j].cwd = 0;
+                    sb.users[j].uid = 0;
+                    //擦除对应的所有用户信息
+                    break;
+                }
+            }
             users_map[i].uid = -1; // wipe out information
             break;
         }
@@ -503,7 +521,7 @@ void cleanup(int id) {
     memcpy(buf, &sb, sizeof(superblock));
     write_block(0, buf);
     free(buf);
-    
+    pthread_mutex_unlock(&mutex);
 }
 
 FILE *log_file;

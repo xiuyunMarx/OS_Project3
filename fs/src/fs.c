@@ -16,6 +16,7 @@
 
 entry curDir, backUp;
 uint curUser=1;
+
 void sbinit() {
     curUser  = 1;
 }
@@ -52,7 +53,8 @@ int user_init(uint uid){
             backUp = curDir;
             if(sb.users[i].cwd == 0){
                 sb.users[i].cwd = sb.root;
-                Warn("user %d : no cwd, set to root", uid);
+                Warn("user %d : no cwd, set to HOME", uid);
+                cd_to_home(uid);
             }
             curDir = _fetch_entry(sb.users[i].cwd);
             curUser = uid;
@@ -230,7 +232,7 @@ int cmd_mk(char *name, short mode) {
 }
 
 int cmd_mkdir(char *name, short mode) {
-    //mkdir d: Create a directory. This will create a subdirectory named d in the current directory
+    //mkdir d: Create a directory. This will create a subdirectory named d in the current directory, curDir NOT CHANGE
     if(_check_duiplicate(name)){
         Error("cmd_mk: file %s already exists", name);
         return E_ERROR;
@@ -462,6 +464,7 @@ inode *_path_finder(const char *name) {
 }
 
 int cmd_cd(char *name) {
+    /*this function will change the curDir to the 'name ' */
     inode *dst = _path_finder(name);
     if (!dst) {
         Error("cmd_cd: path %s not found", name);
@@ -982,4 +985,81 @@ void cmd_exit(uint u){
             break;
         }
     }
+}
+
+int cd_to_home(int auid){
+    backUp = curDir;
+    curUser = 1; //set to root
+    curDir = _fetch_entry(sb.root);
+    int res = cmd_cd("/home");
+    if(res == E_ERROR){
+        Warn("Home not found, initializing home");
+        curDir = _fetch_entry(sb.root);
+        if(cmd_mkdir("home", 0b111111) == E_ERROR){
+            Error("Home directory creation failed");
+            return E_ERROR;
+        }
+        if(cmd_cd("home") == E_ERROR){
+            Error("Error changing to Home directory");
+            return E_ERROR;
+        }
+    }
+    //change the current directory to home, if Not found, create it
+
+    char user_home[MAXNAME];
+    sprintf(user_home, "%d", auid);
+    if(cmd_cd(user_home) == E_ERROR){
+        if(cmd_mkdir(user_home, 0b111111) == E_ERROR){
+            Error("User home directory creation failed");
+            return E_ERROR;
+        }
+        if(cmd_cd(user_home) == E_ERROR){
+            Error("Error changing to User home directory");
+            return E_ERROR;
+        }
+    }
+    //create the user home directory
+    assert(curDir.type == T_DIR && strcmp(curDir.name, user_home) == 0);
+
+    for(int i=0;i<MAXUSERS;i++){
+        if(sb.users[i].uid == auid){
+            sb.users[i].cwd = curDir.inum;
+            Log("User %d home: /home/%s", auid, curDir.name);
+            break;
+        } 
+    }
+    curDir = backUp;
+    curUser = auid; //set back to user
+    return E_SUCCESS;
+}
+
+int cmd_pwd(char *out, int buflen){
+    out[0] = '\0';
+
+    entry        old = curDir;
+    uint         me  = curDir.inum;
+    inode       *n   = iget(me);
+    if (!n) return E_ERROR;
+
+    // 从叶子往上拼接
+    while (me != sb.root) {
+        uint *links = malloc(n->fileSize);
+        readi(n, (uchar*)links, 0, n->fileSize);
+        free(n);
+        me = links[1];  // 父目录 inum
+        n  = iget(me);
+
+        // tmp = "/" + name + out
+        char tmp[buflen];
+        snprintf(tmp, buflen, "/%s%s", n->name, out);
+        strncpy(out, tmp, buflen);
+        free(links);
+    }
+    iput(n);
+
+    // 根目录特例：如果 out 还是空字符串，就写 "/"
+    if (out[0] == '\0') {
+        strncpy(out, "/", buflen);
+    }
+    return E_SUCCESS;
 }
