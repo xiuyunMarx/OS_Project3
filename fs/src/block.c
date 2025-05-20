@@ -63,7 +63,7 @@ int init_disk(char *filename, int ncyl, int nsec, int _ttd) {
     }
     // stretch the file
 
-    diskFile = mmap(NULL,FILE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    diskFile = (char *)mmap(NULL,FILE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if(diskFile == MAP_FAILED){
         Log("error when mapping file to memory\n");
         close(fd);
@@ -170,7 +170,7 @@ void _mount_disk(int ncyl, int nsec){
     _ncyl = ncyl;
     _nsec = nsec;
     ttd = 20;
-    int res = init_disk("tankman.img", ncyl, nsec, ttd);
+    int res = init_disk("futa.img", ncyl, nsec, ttd);
     if(res < 0){
         fprintf(stderr, "Error initializing disk\n");
         close_disk();

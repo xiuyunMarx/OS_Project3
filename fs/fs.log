@@ -1,31 +1,24 @@
-[INFO] login : Success
-[INFO] Disk initialized: tankman.img, 55 Cylinders, 55 Sectors per cylinder
-[WARN] Disk size mismatch: 64512 != 3025, reinitializing disk
+[INFO] Disk initialized: futa.img, 1024 Cylinders, 63 Sectors per cylinder
+[WARN] Disk size mismatch: 2500 != 64512, reinitializing disk
 [WARN] cmd_f: file system uninitialized
-[INFO] format : Success
-[WARN] user 1 : no cwd, set to root
-[INFO] ls : Success
-[INFO] ls : Success
-[INFO] login : Success
-[INFO] mk : Success
-[INFO] ls : Success
-[INFO] mkdir : Success
-[INFO] cd : Success
-[INFO] ls : Success
-[ERROR] cmd_cd: directory d not found
-[ERROR] cmd_cd: path d not found
-[ERROR] cd : Failed to change directory
-[INFO] ls : Success
-[INFO] ls : Success
-[INFO] ls : Success
-[INFO] ls : Success
-[INFO] cd : Success
-[INFO] ls : Success
-[INFO] mkdir : Success
-[INFO] ls : Success
-[INFO] ls : Success
-[INFO] cd : Success
-[INFO] ls : Success
-[INFO] cd : Success
-[INFO] ls : Success
-[INFO] cd : Success
+[INFO] Disk initialized: futa.img, 1024 Cylinders, 63 Sectors per cylinder
+[WARN] cmd_f: file system uninitialized
+[INFO] Disk initialized: futa.img, 1024 Cylinders, 63 Sectors per cylinder
+[WARN] cmd_f: file system uninitialized
+[INFO] Disk initialized: futa.img, 1024 Cylinders, 63 Sectors per cylinder
+[WARN] cmd_f: file system uninitialized
+[INFO] Disk initialized: futa.img, 1024 Cylinders, 63 Sectors per cylinder
+[WARN] cmd_f: file system uninitialized
+[INFO] Disk initialized: futa.img, 1024 Cylinders, 63 Sectors per cylinder
+[WARN] cmd_f: file system uninitialized
+[INFO] Disk initialized: futa.img, 1024 Cylinders, 63 Sectors per cylinder
+[WARN] cmd_f: file system uninitialized
+[INFO] Disk initialized: futa.img, 1024 Cylinders, 63 Sectors per cylinder
+[WARN] cmd_f: file system uninitialized
+[INFO] Disk initialized: futa.img, 1024 Cylinders, 63 Sectors per cylinder
+[WARN] cmd_f: file system uninitialized
+[INFO] Disk initialized: futa.img, 1024 Cylinders, 63 Sectors per cylinder
+[WARN] cmd_f: file system uninitialized
+[ERROR] cmd_mk: file testfile already exists
+[INFO] Disk initialized: futa.img, 1024 Cylinders, 63 Sectors per cylinder
+[WARN] cmd_f: file system uninitialized

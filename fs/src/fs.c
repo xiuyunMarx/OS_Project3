@@ -470,7 +470,7 @@ int cmd_cd(char *name) {
 
     ushort res = _permission_check(dst);
     if(!(res & EXECUTE)){
-        Error("cmd_cd: cannot cd to target directory %s", name);
+        Error("cmd_cd: permission denied, cannot access to %s", name);
         iput(dst);
         return E_ERROR;
     } /*permission check on changing directory*/
@@ -580,7 +580,7 @@ int cmd_rmdir(char *name) {
         return E_ERROR;
     } /*permission check on current directory*/
 
-
+    
     uint *links = (uint*)malloc(cur->fileSize);
     readi(cur, (uchar *)links, 0, cur->fileSize);
     uint total = cur->fileSize / sizeof(uint);
