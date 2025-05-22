@@ -3,6 +3,7 @@
 #include <asm-generic/errno.h>
 #include <assert.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1033,33 +1034,40 @@ int cd_to_home(int auid){
     return E_SUCCESS;
 }
 
-int cmd_pwd(char *out, int buflen){
-    out[0] = '\0';
-
-    entry        old = curDir;
-    uint         me  = curDir.inum;
-    inode       *n   = iget(me);
-    if (!n) return E_ERROR;
-
-    // 从叶子往上拼接
-    while (me != sb.root) {
-        uint *links = malloc(n->fileSize);
-        readi(n, (uchar*)links, 0, n->fileSize);
-        free(n);
-        me = links[1];  // 父目录 inum
-        n  = iget(me);
-
-        // tmp = "/" + name + out
-        char tmp[buflen];
-        snprintf(tmp, buflen, "/%s%s", n->name, out);
-        strncpy(out, tmp, buflen);
-        free(links);
+int cmd_pwd(char **out, size_t buflen){
+    *out = (char *)malloc(BSIZE);
+    *out[0] = '\0';
+    inode *d = iget(curDir.inum);
+    if(d == NULL){
+        Error("cmd_pwd: current directory cannot be found");
+        return E_ERROR;
     }
-    iput(n);
+    if(d->inum == sb.root){
+        strcpy(*out, "/");
+        iput(d);
+        return E_SUCCESS;
+    }else{
 
-    // 根目录特例：如果 out 还是空字符串，就写 "/"
-    if (out[0] == '\0') {
-        strncpy(out, "/", buflen);
+        while(d->inum != sb.root){
+            assert(d->type == T_DIR);
+
+            char *tmp = (char *)malloc(MAXNAME);
+            strcpy(tmp, d->name);
+            char *ret = (char *)malloc(buflen);
+            memset(ret, 0, buflen);
+
+            sprintf(ret, "/%s%s", tmp, *out);
+            strcpy(*out, ret);
+            free(tmp);
+            free(ret);
+            
+            uint *links = (uint *)malloc(d->fileSize);
+            readi(d, (uchar *)links, 0, d->fileSize);
+            uint parent = links[1];
+            iput(d);
+            d = iget(parent);
+        }        
     }
+
     return E_SUCCESS;
 }

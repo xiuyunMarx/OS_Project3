@@ -328,7 +328,6 @@ int handle_d(tcp_buffer *wb, int argc, char *args[], char *reply){
 
 int handle_e(tcp_buffer *wb, int argc, char *args[], char *reply){
     // e: Exit
-    
      char buf[BUFSIZE];
     if(argc != 2){
         sprintf(buf, "Usage: exit <uid>");
@@ -370,14 +369,19 @@ int handle_login(tcp_buffer *wb, int argc, char *args[], char *reply){
 }
 
 int handle_pwd(tcp_buffer *wb, int argc, char *args[], char *reply){
-    char buf[BSIZE];
-    int ret = cmd_pwd(buf, sizeof(buf));
+    char *buf;
+    int ret = cmd_pwd(&buf, BSIZE);
     if (ret != E_SUCCESS) {
         reply_with_no(wb, "pwd failed\n", 11);
+        free(buf);
+        return 0;
     } else {
         reply_with_yes(wb, buf, strlen(buf)+1);
+        free(buf);
+        return  -1;
     }
 }    
+
 static struct {
     const char *name;
     int (*handler)(tcp_buffer *wb, int argc, char *args[], char *reply);

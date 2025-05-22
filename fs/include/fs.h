@@ -4,6 +4,7 @@
 #include "block.h"
 #include "common.h"
 #include "inode.h"
+#include <stddef.h>
 
 // used for cmd_ls
 typedef struct { //type = directory
@@ -40,5 +41,5 @@ int user_end(uint uid);
 void cmd_exit(uint u);
 
 int cd_to_home(int auid);
-int cmd_pwd(char *buf, int buflen);
+int cmd_pwd(char **buf, size_t buflen);
 #endif
