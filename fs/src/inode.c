@@ -69,10 +69,8 @@ bool _is_exist(uint inum){ //检查在inum的位置是否有inode
     uint byte = inum / 8, bit = inum % 8;
     if((bm[byte] & (1u << bit)) == 0) { //check if this bit is 0
         Error("is_exist: the block %d is not allocated", inum);
-        free(bm);
         return false;
     }else{
-        free(bm);
         return true;
     }
 }

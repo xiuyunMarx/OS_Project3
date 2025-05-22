@@ -427,7 +427,7 @@ inode *_path_finder(const char *name) {
             ptr = iget(links[1]);
             free(links);
             if (!ptr) {
-                Error("cmd_cd: parent directory cannot be found");
+                Error("cmd_cd - path finder: parent directory cannot be found");
                 free(path);
                 return NULL;
             }
@@ -450,7 +450,7 @@ inode *_path_finder(const char *name) {
         }
         free(entries);
         if (!found) {
-            Error("cmd_cd: directory %s not found", tok);
+            Error("cmd_cd - path finder: directory %s not found", tok);
             iput(ptr);
             free(path);
             return NULL;
