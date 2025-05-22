@@ -57,17 +57,22 @@ void store_iNode(inode *ip){
 
 bool _is_exist(uint inum){ //检查在inum的位置是否有inode
     if(inum == 0){
+        Error("is_exist: inum is 0");
         return false;
     }
     if(inum < sb.iNode_start ||inum >=sb.data_start){
+        Error("is_exist: inum %d is out of range", inum);
         return false;
     }
 
     uchar *bm = (uchar *)sb.bitmap;
     uint byte = inum / 8, bit = inum % 8;
     if((bm[byte] & (1u << bit)) == 0) { //check if this bit is 0
+        Error("is_exist: the block %d is not allocated", inum);
+        free(bm);
         return false;
     }else{
+        free(bm);
         return true;
     }
 }

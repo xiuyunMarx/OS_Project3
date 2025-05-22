@@ -122,7 +122,7 @@ int user_end(uint uid){
     return E_ERROR;
 }
 
-int cmd_f(int ncyl, int nsec) {
+int cmd_f() {
  /* Format. This will format the file system on the disk, by initializing any/all of the tables that
  the file system relies on*/
     if(curUser != 1){
@@ -132,7 +132,7 @@ int cmd_f(int ncyl, int nsec) {
     superblock tmp_sb;
     memcpy(&tmp_sb, &sb, sizeof(superblock)); //backup user information
 
-    _mount_disk(ncyl, nsec);
+    _mount_disk();
     inode *root ;
     if(sb.root == 0){
         Warn("cmd_f: file system uninitialized");

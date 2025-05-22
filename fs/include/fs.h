@@ -19,7 +19,7 @@ typedef struct { //type = directory
 
 void sbinit();
 
-int cmd_f(int ncyl, int nsec);
+int cmd_f();
 
 int cmd_mk(char *name, short mode);
 int cmd_mkdir(char *name, short mode);

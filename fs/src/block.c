@@ -1,6 +1,6 @@
 #include "../include/block.h"
+#include <assert.h>
 
-void _mount_disk(int ncyl, int nsec);
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -18,7 +18,9 @@ void _mount_disk(int ncyl, int nsec);
 #include "../include/common.h"
 #include "../../include/log.h"
 #include "stdbool.h"
-
+#include "../../include/tcp_utils.h"
+#include "../../include/tcp_buffer.h"
+#define CMD_SIZE 4096
 #define BLOCKSIZE 512
 
 int _ncyl, _nsec, ttd;
@@ -148,6 +150,11 @@ void close_disk() {
     // close the file
 }
 
+int BDS_port=10356;
+char BDS_addr[32] = "localhost";
+static char BDS_response[4096];
+
+tcp_client diskClient;
 
 
 superblock sb={
@@ -165,27 +172,49 @@ superblock sb={
     .users = {0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 };
 
+void diskClientSetup(){
+    assert(BDS_port > 0);
+    assert(strlen(BDS_addr) > 0);
+    diskClient = client_init(BDS_addr, BDS_port);
+}
 
-void _mount_disk(int ncyl, int nsec){
-    _ncyl = ncyl;
-    _nsec = nsec;
-    ttd = 20;
-    int res = init_disk("futa.img", ncyl, nsec, ttd);
-    if(res < 0){
-        fprintf(stderr, "Error initializing disk\n");
-        close_disk();
-        Error("_mount_disk: error when initializing disk");
-        return;
-    }
+void _mount_disk(){
+
+    // ensure TCP client is initialized
+    if (!diskClient) diskClientSetup();
+
+    char *msg = malloc(CMD_SIZE);
+    strcpy(msg, "I");
+    client_send(diskClient, msg, strlen(msg) + 1);
+    int n = client_recv(diskClient, msg, CMD_SIZE);
+    msg[n] = '\0';
+
+    char *token = strtok(msg, " ");
+    assert(token != NULL);
+    _ncyl = atoi(token);
+    token = strtok(NULL, " ");
+    assert(token != NULL);
+    _nsec = atoi(token);
+    free(msg);
+    // _ncyl = _nsec = 50;
+    // ttd = 5;
+    // int res = init_disk("disk.img", _ncyl, _nsec, ttd);
+    // if(res < 0){
+    //     fprintf(stderr, "Error opening disk\n");
+    //     close_disk();
+    //     Error("_mount_disk: error when opening disk");
+    //     return;
+    // }
 
     uchar tmp[BSIZE];
     memset(tmp, 0, BSIZE);
     read_block(0, tmp); // read superblock from disk
     memcpy(&sb, tmp, sizeof(sb)); // copy superblock to sb
 
-    if(sb.size != ncyl * nsec){
-        Warn("Disk size mismatch: %d != %d, reinitializing disk", sb.size, ncyl * nsec);
-        sb.size = ncyl * nsec;
+    if(sb.magic != 0x12345678){
+        Warn("FS not formated yet, reformating");
+        sb.magic = 0x12345678;
+        sb.size = _ncyl * _nsec;
         sb.bmapstart = 1;
         sb.n_bitmap_blocks = (sb.size / BPB) + 1;
         sb.iNode_start = sb.bmapstart + sb.n_bitmap_blocks; //start point of iNode
@@ -213,8 +242,6 @@ void _mount_disk(int ncyl, int nsec){
             Warn("Error allocating memory for bitmap");
             return;
         }
-
-
         for(int i = sb.bmapstart; i< sb.bmapstart + sb.n_bitmap_blocks; i++){
             read_block(i, (uchar *)(sb.bitmap + (i - sb.bmapstart) * BSIZE));
         }
@@ -336,33 +363,57 @@ void get_disk_info(int *ncyl, int *nsec) {
 }
 
 void read_block(int blockno, uchar *buf) {
+    if(!diskClient ) diskClientSetup();
+
     if(blockno <0 || blockno >= sb.size){ //sb.size is the total number of blocks
         Warn("read_block: block number out of range");
         return;
     }
     int cyl = blockno / _nsec, sec = blockno % _nsec;
-    int res = disk_cmd_r(cyl, sec, (char *)buf); // write data to disk
-    if(res < 0){
-        Error("read_block: error when reading disk block");
-        return ;
+    // int res = disk_cmd_r(cyl, sec, (char *)buf); // write data to disk
+    // if(res < 0){
+    //     Error("read_block: error when reading disk block");
+    //     return ;
+    // }
+
+    char *msg = malloc(CMD_SIZE);
+    int header = sprintf(msg, "R %d %d", cyl, sec);
+    client_send(diskClient, msg, header + 1);
+    int n = client_recv(diskClient, msg, CMD_SIZE);
+    if(n <= 0 || strcmp(msg, "No") == 0){
+        Error("read_block: error reading block");
+        free(msg);
+        return;
     }
-    return ;
+    memcpy(buf, msg + 4, BSIZE);
+    free(msg);
 }
 
 void write_block(int blockno, uchar *buf){
-    
+    if(!diskClient ) diskClientSetup();
+
     if(blockno <0 || blockno >= sb.size){ //sb.size is the total number of blocks
-        Warn("read_block: block number out of range");
+        Warn("write_block: block number out of range");
         return;
     }
 
     int cyl = blockno / _nsec, sec = blockno % _nsec;
-    int res = disk_cmd_w(cyl, sec, BSIZE, (char *)buf); // write data to disk
-    if(res < 0){
+    // int res = disk_cmd_w(cyl, sec, BSIZE, (char *)buf); // write data to disk
+    // if(res < 0){
+    //     Error("write_block: error writing block");
+    //     return ;
+    // }
+
+    char *msg = malloc(CMD_SIZE);
+    int header = sprintf(msg, "W %d %d %d ", cyl, sec, BSIZE);
+    memcpy(msg + header, buf, BSIZE);
+    client_send(diskClient, msg, header + BSIZE);
+    int n = client_recv(diskClient, msg, CMD_SIZE);
+    msg[n] = '\0';
+    if(strcmp(msg, "No") == 0){
         Error("write_block: error writing block");
-        return ;
     }
-    return ;
+    free(msg);
 }
 
 void exit_block(){
@@ -375,5 +426,4 @@ void exit_block(){
     memcpy(tmp, &sb, sizeof(sb));
     write_block(0, tmp); // write superblock to disk
     // write superblock to disk
-    close_disk();
 }

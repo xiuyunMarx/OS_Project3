@@ -8,6 +8,7 @@
 int nmeta;
 
 void mock_format() {
+    _mount_disk();
     sb.size = 2048;  // 2048 blocks
     int nbitmap = (sb.size / BPB) + 1;
     nmeta = nbitmap + 7;  // some first blocks for metadata
@@ -103,6 +104,7 @@ mt_test(test_free_block) {
 }
 
 void block_tests() {
+    mock_format();
     mt_run_test(test_read_write_block);
     mt_run_test(test_zero_block);
     mt_run_test(test_allocate_block);

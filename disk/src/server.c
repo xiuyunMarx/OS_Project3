@@ -59,40 +59,25 @@ int handle_w(tcp_buffer *wb, char *args, int len) {
     char *data;
 
     // Parse the arguments
-    char *token = strtok(args, " ");
-    if (!token) {
-        fprintf(stderr, "Missing cylinder argument.\n");
+    int offset = 0;
+    if (sscanf(args, "%d %d %d %n", &cyl, &sec, &datalen, &offset) != 3) {
+        fprintf(stderr, "Invalid W command arguments.\n");
         return -1;
     }
-    cyl = atoi(token);
-    token = strtok(NULL, " ");
-    if (!token) {
-        fprintf(stderr, "Missing sector argument.\n");
-        return -1;
-    }
-    sec = atoi(token);
-    token = strtok(NULL, " ");
-    if (!token) {
-        fprintf(stderr, "Missing length argument.\n");
-        return -1;
-    }
-    datalen = atoi(token);
-    // Get the remaining text—including any spaces—to copy 'len' bytes from
-    token = strtok(NULL, "");
-    if (!token) {
-        fprintf(stderr, "Missing data.\n");
+    
+    if (datalen < 0 || datalen > 512) {
+        fprintf(stderr, "Invalid data length %d\n", datalen);
         return -1;
     }
 
-    data = (char *)malloc(sizeof(char) * (datalen + 1));
-
+    char *data_start = args + offset;
+    data = malloc(datalen);
     if (!data) {
         Log("Error allocating memory");
         perror("malloc");
         return -1;
     }
-
-    strncpy(data, token, datalen);
+    memcpy(data, data_start, datalen);
 
     if (cmd_w(cyl, sec, datalen, data) == 0) {
         reply_with_yes(wb, NULL, 0);

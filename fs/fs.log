@@ -1,19 +1,2 @@
-[INFO] login : Success
-[INFO] login : Success
-[INFO] Disk initialized: futa.img, 85 Cylinders, 2 Sectors per cylinder
-[WARN] Disk size mismatch: 1089 != 170, reinitializing disk
-[WARN] cmd_f: file system uninitialized
-[INFO] format : Success
-[WARN] user 1 : no cwd, set to HOME
-[ERROR] cmd_cd: directory home not found
-[ERROR] cmd_cd: path /home not found
-[WARN] Home not found, initializing home
-[ERROR] cmd_cd: directory 1 not found
-[ERROR] cmd_cd: path 1 not found
-[INFO] User 1 home: /home/1
-[INFO] User 1 : Found, cwd = 1 
-[WARN] user 2 : no cwd, set to HOME
-[ERROR] cmd_cd: directory 2 not found
-[ERROR] cmd_cd: path 2 not found
-[INFO] User 2 home: /home/2
-[INFO] User 2 : Found, cwd = 2 
+[WARN] FS not formated yet, reformating
+[WARN] allocate block: No free blocks

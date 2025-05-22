@@ -26,6 +26,9 @@ typedef struct {
 // sb is defined in block.c
 extern superblock sb;
 
+extern int BDS_port;
+extern char BDS_addr[32];
+
 void zero_block(uint bno);
 uint allocate_block();
 void free_block(uint bno);
@@ -37,6 +40,7 @@ void write_block(int blockno, uchar *buf);
 uint allocate_data_block();
 uint allocate_iNode_block();
 
-void _mount_disk(int ncyl, int nsec);
+void _mount_disk();
+void diskClientSetup();
 void exit_block();
 #endif
