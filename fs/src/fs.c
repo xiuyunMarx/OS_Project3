@@ -122,7 +122,7 @@ int user_end(uint uid){
     return E_ERROR;
 }
 
-int cmd_f(int ncyl, int nsec) {
+int cmd_f() {
  /* Format. This will format the file system on the disk, by initializing any/all of the tables that
  the file system relies on*/
     if(curUser != 1){
@@ -132,7 +132,7 @@ int cmd_f(int ncyl, int nsec) {
     superblock tmp_sb;
     memcpy(&tmp_sb, &sb, sizeof(superblock)); //backup user information
 
-    _mount_disk(ncyl, nsec);
+    _mount_disk();
     inode *root ;
     if(sb.root == 0){
         Warn("cmd_f: file system uninitialized");
@@ -427,7 +427,7 @@ inode *_path_finder(const char *name) {
             ptr = iget(links[1]);
             free(links);
             if (!ptr) {
-                Error("cmd_cd: parent directory cannot be found");
+                Error("cmd_cd - path finder: parent directory cannot be found");
                 free(path);
                 return NULL;
             }
@@ -450,7 +450,7 @@ inode *_path_finder(const char *name) {
         }
         free(entries);
         if (!found) {
-            Error("cmd_cd: directory %s not found", tok);
+            Error("cmd_cd - path finder: directory %s not found", tok);
             iput(ptr);
             free(path);
             return NULL;
@@ -962,7 +962,7 @@ int cmd_login(int auid) {
         }
         if(sb.users[i].uid == 0){
             sb.users[i].uid = auid;
-            sb.users[i].cwd = sb.root;
+            sb.users[i].cwd = 0; //No current directory initially
             fprintf(stderr,"User %d logged in\n", auid);
             return E_SUCCESS;
         }

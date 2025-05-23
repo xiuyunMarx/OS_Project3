@@ -75,11 +75,6 @@ int cmd_r(int cyl, int sec, char *buf) {
         return 1; //read a block each time
     }
     memcpy(buf, diskFile + start*BLOCKSIZE, BLOCKSIZE);
-    if(msync(diskFile, start * BLOCKSIZE, MS_SYNC) == -1){
-        Log("error when syncing file to disk\n");
-        return -1;
-    }// sync the file to disk
-
     diskDelay(lastCyl, cyl); // simulate the delay between cylinders
     lastCyl = cyl; // update the last cylinder accessed
 
@@ -111,11 +106,7 @@ int cmd_w(int cyl, int sec, int len, char *data) {
 
     int start = cyl * _nsec + sec;
     memcpy(diskFile + start*BLOCKSIZE, buf, BLOCKSIZE);
-    if(msync(diskFile, start * BLOCKSIZE, MS_SYNC) == -1){
-        Log("error when syncing file to disk\n");
-        free(buf);
-        return -1;
-    }// sync the file to disk
+
     free(buf);
     // write data to disk
 

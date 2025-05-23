@@ -21,22 +21,13 @@ struct Mapping{
 
 int handle_f(tcp_buffer *wb, int argc, char *args[], char *reply){
     static char buf[BUFSIZE];
-    if(argc != 3){
-        sprintf(buf, "Usage: f <ncyl> <nsec>\n");
+    if(argc != 1){
+        sprintf(buf, "Usage: f (a single f)\n");
         Error("format : Invalid arguments");
         reply_with_no(wb, buf, strlen(buf) + 1);
         return -1;
     }
-
-    int ncyl = atoi(args[1]), nsec = atoi(args[2]);
-    if (ncyl <= 0 || nsec <= 0) {
-        sprintf(buf, "arguments cannot be negative\n");
-        Error("format : Invalid arguments");
-        reply_with_no(wb, buf, strlen(buf) + 1);
-        return -1;
-    }
-
-    int ret = cmd_f(ncyl, nsec);
+    int ret = cmd_f();
     if(ret != E_SUCCESS){
         sprintf(buf, "format : format failed, only Root user can format\n");
         Error("format : Failed to format");
@@ -48,6 +39,7 @@ int handle_f(tcp_buffer *wb, int argc, char *args[], char *reply){
         reply_with_yes(wb, buf, strlen(buf) + 1);
         return 0;
     }
+    return 0;
 }
 
 int handle_mk(tcp_buffer *wb, int argc, char *args[], char *reply){
@@ -328,7 +320,7 @@ int handle_d(tcp_buffer *wb, int argc, char *args[], char *reply){
 
 int handle_e(tcp_buffer *wb, int argc, char *args[], char *reply){
     // e: Exit
-     char buf[BUFSIZE];
+    char buf[BUFSIZE];
     if(argc != 2){
         sprintf(buf, "Usage: exit <uid>");
         Error("e : Invalid arguments");
@@ -403,6 +395,7 @@ void on_connection(int id) {
             break;
         }
     }
+    Log("on_connection: client %d connected", id);
 }
 
 int fetch_uid(int id){
@@ -532,12 +525,16 @@ FILE *log_file;
 
 int main(int argc, char *argv[]) {
     log_init("fs.log");
-    int port = 1145;
+    int FSPort=1145;
     if(argc != 4){
         fprintf(stderr, "Usage: ./FS <DiskServerAddress> <BDSPort=10356> <FSPort=12356>\n");
-    }else{
-        port = atoi(argv[3]);
-        if(port <= 0){
+    } else {
+        FSPort = atoi(argv[3]);
+        // initialize disk-server address and port from arguments
+        BDS_port = atoi(argv[2]);
+        strncpy(BDS_addr, argv[1], sizeof(BDS_addr) - 1);
+        BDS_addr[sizeof(BDS_addr) - 1] = '\0';
+        if(FSPort <= 0){
             fprintf(stderr, "Invalid port number\n");
             return -1;
         }
@@ -546,10 +543,12 @@ int main(int argc, char *argv[]) {
         users_map[i].client_id = -1;
         users_map[i].uid = -1;
     }
-    tcp_server server = server_init(port, 20, on_connection, on_recv, cleanup);
+    diskClientSetup();
+    tcp_server server = server_init(FSPort, 20, on_connection, on_recv, cleanup);
         //端口号, 线程数, 传入三个函数, 分别是: 有一个客户端连接时执行, server收到客户端的消息时的处理函数, 客户端断开连接时的处理函数
     server_run(server);
+    // _mount_disk();
 
-    // never reached
+    free(sb.bitmap);
     log_close();
 }

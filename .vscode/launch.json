@@ -1,0 +1,26 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug (disk)",
+            "program": "${workspaceFolder}/disk/BDS",
+            "args": ["t", "55","55","5","10356"],
+            "cwd": "${workspaceFolder}",
+        },
+
+
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug",
+            "program": "${workspaceFolder}/fs/FS",
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
