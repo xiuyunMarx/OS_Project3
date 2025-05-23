@@ -417,10 +417,10 @@ void write_block(int blockno, uchar *buf){
 }
 
 void exit_block(){
-    if(sb.bitmap != NULL){
-        free(sb.bitmap);
-        sb.bitmap = NULL;
-    }
+    _update_bitmap();
+
+
+
     uchar tmp[BSIZE];
     memset(tmp, 0, BSIZE);
     memcpy(tmp, &sb, sizeof(sb));

@@ -320,7 +320,7 @@ int handle_d(tcp_buffer *wb, int argc, char *args[], char *reply){
 
 int handle_e(tcp_buffer *wb, int argc, char *args[], char *reply){
     // e: Exit
-     char buf[BUFSIZE];
+    char buf[BUFSIZE];
     if(argc != 2){
         sprintf(buf, "Usage: exit <uid>");
         Error("e : Invalid arguments");
@@ -395,6 +395,7 @@ void on_connection(int id) {
             break;
         }
     }
+    Log("on_connection: client %d connected", id);
 }
 
 int fetch_uid(int id){

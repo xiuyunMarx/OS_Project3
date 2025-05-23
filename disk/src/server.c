@@ -3,9 +3,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "disk.h"
-#include "log.h"
-#include "tcp_utils.h"
+#include "../include/disk.h"
+#include "../../include/log.h"
+#include "../../include/tcp_utils.h"
 
 #define ARG_MAX 16
 
@@ -39,21 +39,15 @@ int handle_i(tcp_buffer *wb, char *args, int len) {
 int handle_r(tcp_buffer *wb, char *args, int len) {
     char *cmd[ARG_MAX] = {};
     printf("line: %s, len:%d\n", args, len);
-    // for (int i=0;i<5;i++) printf("--%d", args[i]);
-    // printf("\n");
     int ret = parse(args, cmd, 2);
     if (ret == 0) {
-        // printf("No1\n");
         return 0;
     }
     int cyl, sec;
-    // printf("%d, %d", convert(cmd[0], &cyl) , convert(cmd[1], &sec));
     if (!(convert(cmd[0], &cyl) && convert(cmd[1], &sec))) {
-        // printf("No2\n");
         return 0;
     }
     char buf[512];
-    // printf("---\n");
 
     if (cmd_r(cyl, sec, buf) == 0) {
         printf("read\n");

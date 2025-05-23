@@ -962,7 +962,7 @@ int cmd_login(int auid) {
         }
         if(sb.users[i].uid == 0){
             sb.users[i].uid = auid;
-            sb.users[i].cwd = sb.root;
+            sb.users[i].cwd = 0; //No current directory initially
             fprintf(stderr,"User %d logged in\n", auid);
             return E_SUCCESS;
         }
