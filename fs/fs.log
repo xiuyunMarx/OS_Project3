@@ -1,11 +1,25 @@
 [INFO] on_connection: client 0 connected
+[INFO] on_connection: client 1 connected
 [INFO] login : Success
+[WARN] FS not formated yet, reformating
+[WARN] cmd_f: file system uninitialized
 [INFO] format : Success
 [WARN] user 1 : no cwd, set to HOME
+[ERROR] cmd_cd - path finder: directory home not found
+[ERROR] cmd_cd: path /home not found
+[WARN] Home not found, initializing home
+[ERROR] cmd_cd - path finder: directory 1 not found
+[ERROR] cmd_cd: path 1 not found
 [INFO] User 1 home: /home/1
 [INFO] User 1 : Found, cwd = 1 
+[INFO] login : Success
+[WARN] user 2 : no cwd, set to HOME
+[ERROR] cmd_cd - path finder: directory 2 not found
+[ERROR] cmd_cd: path 2 not found
+[INFO] User 2 home: /home/2
+[INFO] User 2 : Found, cwd = 2 
 [INFO] ls : Success
-[INFO] User 1 : Found, cwd = 1 
-[INFO] User 1 : Found, cwd = 1 
+[INFO] User 2 : Found, cwd = 2 
+[INFO] User 2 : Found, cwd = 2 
 [INFO] Exit
-[ERROR] user 1 : Not Found
+[ERROR] user 2 : Not Found

@@ -419,8 +419,6 @@ void write_block(int blockno, uchar *buf){
 void exit_block(){
     _update_bitmap();
 
-
-
     uchar tmp[BSIZE];
     memset(tmp, 0, BSIZE);
     memcpy(tmp, &sb, sizeof(sb));
