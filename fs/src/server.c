@@ -549,6 +549,6 @@ int main(int argc, char *argv[]) {
     server_run(server);
     // _mount_disk();
 
-    
+    free(sb.bitmap);
     log_close();
 }
