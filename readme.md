@@ -8,6 +8,12 @@ make
 ```
 to compile the project.
 
+## Test
+Run 
+```
+make test
+```
+in the root directory, Note that **YOU MUST SWITCH TO 'ForTest' BRANCH** before testing.
 ## How to use
 Inside the ./fs directory, run 
 ```
