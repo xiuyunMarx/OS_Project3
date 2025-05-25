@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
+#include "assert.h"
 #include "../include/disk.h"
 #include "../../include/log.h"
 #include "../../include/tcp_utils.h"
@@ -19,13 +19,16 @@ int parse(char *line, char *cmd[], int argc) {
     }
     return idx == argc;
 }
-int convert(char *str, int *num) {
+
+
+int string_to_dec(char *str, int *num) {
     char *endptr;
     *num = strtol(str, &endptr, 10);
     return *endptr == '\0';
 }
 
 int handle_i(tcp_buffer *wb, char *args, int len) {
+    Log("Info command");
     int ncyl, nsec;
     cmd_i(&ncyl, &nsec);
     static char buf[64];
@@ -37,14 +40,18 @@ int handle_i(tcp_buffer *wb, char *args, int len) {
 }
 
 int handle_r(tcp_buffer *wb, char *args, int len) {
-    char *cmd[ARG_MAX] = {};
+    Log("Read command");
+    char *cmd[ARG_MAX];
+    memset(cmd, 0, sizeof(cmd));
+    assert(len>=0);
+    
     printf("line: %s, len:%d\n", args, len);
     int ret = parse(args, cmd, 2);
     if (ret == 0) {
         return 0;
     }
     int cyl, sec;
-    if (!(convert(cmd[0], &cyl) && convert(cmd[1], &sec))) {
+    if (!(string_to_dec(cmd[0], &cyl) && string_to_dec(cmd[1], &sec))) {
         return 0;
     }
     char buf[512];
@@ -59,16 +66,18 @@ int handle_r(tcp_buffer *wb, char *args, int len) {
 }
 
 int handle_w(tcp_buffer *wb, char *args, int len) {
-    Log("read");
-    char *cmd[ARG_MAX] = {};
+    Log("Write command");
+    char *cmd[ARG_MAX];
+    memset(cmd, 0, sizeof(cmd));
     printf("line: %s, len:%d\n", args, len);
+    assert(len >= 0);
     int ret = parse(args, cmd, 3);
     if (ret == 0) {
         printf("No\n");
         return 0;
     }
     int cyl, sec, datalen;
-    if (!(convert(cmd[0], &cyl) && convert(cmd[1], &sec) && convert(cmd[2], &datalen))) {
+    if (!(string_to_dec(cmd[0], &cyl) && string_to_dec(cmd[1], &sec) && string_to_dec(cmd[2], &datalen))) {
         printf("No\n");
         return 0;
     }

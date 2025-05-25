@@ -1,0 +1,70 @@
+[INFO] on_connection: client 0 connected
+[INFO] login : Success
+[WARN] FS not formated yet, reformating
+[WARN] cmd_f: file system uninitialized
+[INFO] format : Success
+[WARN] user 1 : no cwd, set to HOME
+[ERROR] cmd_cd - path finder: directory home not found
+[ERROR] cmd_cd: path /home not found
+[WARN] Home not found, initializing home
+[ERROR] cmd_cd - path finder: directory 1 not found
+[ERROR] cmd_cd: path 1 not found
+[INFO] User 1 home: /home/1
+[INFO] User 1 : Found, cwd = 1 
+[INFO] ls : Success
+[INFO] User 1 : Found, cwd = 1 
+[INFO] User 1 : Found, cwd = 1 
+[INFO] mk : Success
+[INFO] User 1 : Found, cwd = 1 
+[INFO] w : Success
+[INFO] User 1 : Found, cwd = 1 
+[INFO] cat : Success
+[INFO] User 1 : Found, cwd = 1 
+[INFO] i : Success
+[INFO] User 1 : Found, cwd = 1 
+[INFO] cat : Success
+[INFO] User 1 : Found, cwd = 1 
+[INFO] ls : Success
+[INFO] User 1 : Found, cwd = 1 
+[INFO] cd : Success
+[INFO] User 1 : Found, cwd = home 
+[INFO] cd : Success
+[INFO] User 1 : Found, cwd = / 
+[INFO] User 1 : Found, cwd = / 
+[INFO] mkdir : Success
+[INFO] User 1 : Found, cwd = / 
+[INFO] cd : Success
+[INFO] User 1 : Found, cwd = d 
+[INFO] ls : Success
+[INFO] User 1 : Found, cwd = d 
+[INFO] mk : Success
+[INFO] User 1 : Found, cwd = d 
+[INFO] mk : Success
+[INFO] User 1 : Found, cwd = d 
+[INFO] rm : Success
+[INFO] User 1 : Found, cwd = d 
+[INFO] mkdir : Success
+[INFO] User 1 : Found, cwd = d 
+[INFO] cd : Success
+[INFO] User 1 : Found, cwd = 22 
+[INFO] mkdir : Success
+[INFO] User 1 : Found, cwd = 22 
+[INFO] mkdir : Success
+[INFO] User 1 : Found, cwd = 22 
+[ERROR] cmd_mk: file 2 already exists
+[ERROR] mkdir : Failed to create directory
+[INFO] User 1 : Found, cwd = 22 
+[INFO] mkdir : Success
+[INFO] User 1 : Found, cwd = 22 
+[INFO] ls : Success
+[INFO] User 1 : Found, cwd = 22 
+[INFO] cd : Success
+[INFO] User 1 : Found, cwd = d 
+[INFO] ls : Success
+[INFO] User 1 : Found, cwd = d 
+[INFO] rmdir : Success
+[INFO] User 1 : Found, cwd = d 
+[INFO] ls : Success
+[INFO] User 1 : Found, cwd = d 
+[INFO] Exit
+[ERROR] user 1 : Not Found
