@@ -1,8 +1,9 @@
-#include "inode.h"
+#include "../include/inode.h"
 
 #include <assert.h>
 #include <bits/types/locale_t.h>
 #include <locale.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,7 +11,7 @@
 
 #include "../include/block.h"
 #include "../../include/log.h"
-#include "common.h"
+#include "../include/common.h"
 
 
 void copy_to_diNode(dinode *d, inode *ip){
@@ -57,15 +58,18 @@ void store_iNode(inode *ip){
 
 bool _is_exist(uint inum){ //检查在inum的位置是否有inode
     if(inum == 0){
+        Error("is_exist: inum is 0");
         return false;
     }
     if(inum < sb.iNode_start ||inum >=sb.data_start){
+        Error("is_exist: inum %d is out of range", inum);
         return false;
     }
 
     uchar *bm = (uchar *)sb.bitmap;
     uint byte = inum / 8, bit = inum % 8;
     if((bm[byte] & (1u << bit)) == 0) { //check if this bit is 0
+        Error("is_exist: the block %d is not allocated", inum);
         return false;
     }else{
         return true;
@@ -181,9 +185,11 @@ int readi(inode *ip, uchar *dst, uint off, uint n) {
     return bytesRead;
 }
 
-uint _which_write(inode *ip, uint logic){ //this function should be called sequentially
+uint _which_write(inode *ip, uint logic){ 
+    //this function should be called sequentially
     //return the block number of block that waits to be written
     //allocate a new block if the block is not allocated
+    //update the block number each time when allocate a new block
     const uint links_per_block = BSIZE / sizeof(uint);
     if(logic < NDIRECT){
         if(ip->addrs[logic] == 0){
@@ -293,6 +299,7 @@ uint _which_write(inode *ip, uint logic){ //this function should be called seque
 }
 
 int writei(inode *ip, uchar *src, uint off, uint n) {
+    //write into an inode from position off, n bytes
     if(off > ip->fileSize){
         Error("writei: off too large, file size is %d, off is %d", ip->fileSize, off);
         return -1;
@@ -315,7 +322,13 @@ int writei(inode *ip, uchar *src, uint off, uint n) {
     memcpy(toWrite + off % BSIZE + n, tmp + stop_point + 1, BSIZE - stop_point - 1);
     free(tmp);
 
-    for(uint logic = start_block ; logic <= end_block;logic++){
+    uint old = ip->fileSize; //save the old file size
+    bool is_overwrite = false;
+    if(ip->fileSize < off + n){
+        ip->fileSize = start_block * BSIZE; //the newly written content will overwrite the old content
+        is_overwrite = true;
+    } 
+    for(uint logic = start_block ; logic <= end_block;logic++){ //logic: the logic block number
         uint bno = _which_write(ip, logic);
         if(bno == 0){
             Error("writei: no enough space");
@@ -323,10 +336,19 @@ int writei(inode *ip, uchar *src, uint off, uint n) {
             return -1;
         }
         write_block(bno, toWrite + (logic - start_block) * BSIZE);
+        if(is_overwrite){
+            if(logic != end_block) ip->fileSize += BSIZE; //if it is an overwrite, we should increase the file size
+            else {
+                uint tail = (off + n) % BSIZE;
+                if(tail == 0) ip->fileSize += BSIZE; //if the tail is 0, we should increase the file size
+                else ip->fileSize += tail; //otherwise, we should increase the file size by the tail
+            }
+        } 
     }
 
     free(toWrite);
-    ip->fileSize = max(ip->fileSize, off + n);
+    // ip->fileSize = max(ip->fileSize, off + n); //update the file size
+    assert(ip->fileSize  == max(old, off + n)); //the file size should be at least old or off + n
     iupdate(ip);
     return n;
 }
