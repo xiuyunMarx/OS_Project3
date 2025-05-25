@@ -54,10 +54,14 @@ int user_init(uint uid){
             backUp = curDir;
             if(sb.users[i].cwd == 0){
                 sb.users[i].cwd = sb.root;
-                Warn("user %d : no cwd, set to HOME", uid);
-                cd_to_home(uid);
+                Warn("user %d : uninitialised, create HOME and set default CWD to ROOT", uid);
+                if(cd_to_home(uid) == E_ERROR){
+                    Error("user %d: home directory initialization failed", uid);
+                    return E_ERROR;
+                }
+                sb.users[i].cwd = sb.root; //set cwd to root
             }
-            curDir = _fetch_entry(sb.users[i].cwd);
+            // curDir = _fetch_entry(sb.users[i].cwd);
             curUser = uid;
             Log("User %d : Found, cwd = %s ", uid, curDir.name);
             return E_SUCCESS;

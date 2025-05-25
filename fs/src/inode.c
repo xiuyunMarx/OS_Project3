@@ -184,9 +184,11 @@ int readi(inode *ip, uchar *dst, uint off, uint n) {
     return bytesRead;
 }
 
-uint _which_write(inode *ip, uint logic){ //this function should be called sequentially
+uint _which_write(inode *ip, uint logic){ 
+    //this function should be called sequentially
     //return the block number of block that waits to be written
     //allocate a new block if the block is not allocated
+    //update the block number each time when allocate a new block
     const uint links_per_block = BSIZE / sizeof(uint);
     if(logic < NDIRECT){
         if(ip->addrs[logic] == 0){
@@ -296,6 +298,7 @@ uint _which_write(inode *ip, uint logic){ //this function should be called seque
 }
 
 int writei(inode *ip, uchar *src, uint off, uint n) {
+    //write into an inode from position off, n bytes
     if(off > ip->fileSize){
         Error("writei: off too large, file size is %d, off is %d", ip->fileSize, off);
         return -1;
@@ -318,7 +321,9 @@ int writei(inode *ip, uchar *src, uint off, uint n) {
     memcpy(toWrite + off % BSIZE + n, tmp + stop_point + 1, BSIZE - stop_point - 1);
     free(tmp);
 
-    for(uint logic = start_block ; logic <= end_block;logic++){
+    uint old = ip->fileSize; //save the old file size
+    ip->fileSize = start_block * BSIZE; 
+    for(uint logic = start_block ; logic <= end_block;logic++){ //logic: the logic block number
         uint bno = _which_write(ip, logic);
         if(bno == 0){
             Error("writei: no enough space");
@@ -326,10 +331,11 @@ int writei(inode *ip, uchar *src, uint off, uint n) {
             return -1;
         }
         write_block(bno, toWrite + (logic - start_block) * BSIZE);
+        ip->fileSize += BSIZE; //increase the file size by BSIZE each time
     }
 
     free(toWrite);
-    ip->fileSize = max(ip->fileSize, off + n);
+    assert(ip->fileSize  == max(old, off + n)); //the file size should be at least old or off + n
     iupdate(ip);
     return n;
 }
