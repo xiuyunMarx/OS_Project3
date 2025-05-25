@@ -9,4 +9,12 @@ make
 to compile the project.
 
 ## How to use
-Inside the ./fs directory, run ./FS to start server and ./FC to start a client. The server and client will listen and connect to port 1145 by default
+Inside the ./fs directory, run 
+```
+./FS
+```
+to start server in default configurations , and
+```
+./FC
+```
+to start a client. The server and client will listen and connect to default port.
