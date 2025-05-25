@@ -24,3 +24,5 @@ to start server in default configurations , and
 ./FC
 ```
 to start a client. The server and client will listen and connect to default port.
+
+The detailed usage can be found in report.pdf
