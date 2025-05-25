@@ -9,10 +9,9 @@
             "request": "launch",
             "name": "Debug (disk)",
             "program": "${workspaceFolder}/disk/BDS",
-            "args": ["t", "55","55","5","10356"],
+            "args": ["t.img", "55","55","5","10356"],
             "cwd": "${workspaceFolder}",
         },
-
 
         {
             "type": "lldb",
