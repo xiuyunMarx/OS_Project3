@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <pthread.h>
@@ -27,6 +28,7 @@ int handle_f(tcp_buffer *wb, int argc, char *args[], char *reply){
         reply_with_no(wb, buf, strlen(buf) + 1);
         return -1;
     }
+    assert(strcmp(args[0], "f") == 0);
     int ret = cmd_f();
     if(ret != E_SUCCESS){
         sprintf(buf, "format : format failed, only Root user can format\n");
@@ -421,12 +423,39 @@ int on_recv(int id, tcp_buffer *wb, char *msg, int len) {
     // 2. 分割命令和参数
     int argc = 0;
     char *argv[150];
-    char *token = strtok(msg, " \r\n");
-    while (token != NULL && argc < 150) {
-        argv[argc++] = token;
-        token = strtok(NULL, " \r\n");
-    }
+    char *token;
+    // while (token != NULL && argc < 150) {
+    //     argv[argc++] = token;
+    //     token = strtok(NULL, " \r\n");
+    // }
+    while(argc < 150){
+        if(argc == 3 && strcmp(argv[0], "w") == 0) {
+            int data_len = atoi(argv[2]);
+            assert(data_len >= 0);
+            char *rest = token + strlen(token) + 1; // skip the first space;
+            rest[data_len] = '\0'; // ensure the data is null-terminated
+            argv[argc++] = rest; // store the data as the last argument
+            fprintf(stderr, "Data length: %d, Data: %s\n", data_len, rest);
+            break; // no more tokens to process
+        }else if(argc == 4 && strcmp(argv[0], "i") == 0) {
+            //i f pos l data: Insert data to a file.
+            int data_len = atoi(argv[3]);
+            assert(data_len >= 0);
+            char *rest = token + strlen(token) + 1; // skip the first space;
+            rest[data_len] = '\0'; // ensure the data is null-terminated
+            argv[argc++] = rest; // store the data as the last argument
+            fprintf(stderr, "Data length: %d, Data: %s\n", data_len, rest);
+            break; // no more tokens to process
+        } else {
+            if(argc == 0) token = strtok(msg, " \r\n"); // first token is the command
+            else token = strtok(NULL, " \r\n");
+            if(token == NULL) {
+                break; // no more tokens to process
+            }            
+            argv[argc++] = token;
+        }
 
+    }
     // 如果没有任何参数，直接返回
     if (argc == 0) {
         reply_with_no(wb, "No command received\n", 20);
