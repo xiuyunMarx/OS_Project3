@@ -870,7 +870,8 @@ int cmd_i(char *name, uint pos, uint len, const char *data) {
         uchar *buf = (uchar *)malloc(ip->fileSize + len);
         memset(buf, 0 , ip->fileSize + len);
         readi(ip , buf, 0, ip->fileSize);
-        memcpy(buf + pos + len, buf + pos, ip->fileSize - pos);
+        //shift the data after pos
+        memmove(buf + pos + len, buf + pos, ip->fileSize - pos);
         memcpy(buf + pos, data, len);
         writei(ip, buf, 0, ip->fileSize + len);
         ip->modTime = time(NULL);
@@ -941,7 +942,7 @@ int cmd_d(char *name, uint pos, uint len) {
             free(buf);
         }else{
             //shift the data after pos
-            memcpy(buf + pos, buf + pos + len, ip->fileSize - pos - len);
+            memmove(buf + pos, buf + pos + len, ip->fileSize - pos - len);
             writei(ip, buf, 0, ip->fileSize - len);
             ip->modTime = time(NULL);
             ip->fileSize -= len;
