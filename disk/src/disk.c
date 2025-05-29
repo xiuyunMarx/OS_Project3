@@ -89,6 +89,7 @@ int cmd_w(int cyl, int sec, int len, char *data) {
 
     char *buf = (char*)malloc(BLOCKSIZE * sizeof(char));
     if (buf == NULL) {
+        free(buf);
         Log("Error allocating memory");
         return 1;
     }
@@ -107,12 +108,15 @@ int cmd_w(int cyl, int sec, int len, char *data) {
     int start = cyl * _nsec + sec;
     memcpy(diskFile + start*BLOCKSIZE, buf, BLOCKSIZE);
     if(diskFile){
-        int res = msync(diskFile + start*BLOCKSIZE, BLOCKSIZE, MS_SYNC);
+        int FILE_SIZE = _ncyl * _nsec * BLOCKSIZE;
+        int res = msync(diskFile, FILE_SIZE, MS_SYNC| MS_INVALIDATE);
         if(res < 0){
-            Log("disk: cmd_w: error when syncing data to disk");
+            Error("disk: cmd_w: error when syncing data to disk");
+            free(buf);
             return -1;
         }
     }
+    
     free(buf);
     // write data to disk
 
@@ -121,7 +125,7 @@ int cmd_w(int cyl, int sec, int len, char *data) {
     return 0;
 }
 
-void close_disk() {
+void close_disk(void) {
     close(fd);
     if (diskFile != NULL) {
         munmap(diskFile, FILE_SIZE); // unmap the file

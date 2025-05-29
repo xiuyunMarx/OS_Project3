@@ -26,7 +26,6 @@ test_fs_OBJS = tests/main.o \
 $(foreach exe,$(EXES), \
     $(eval $(exe)_OBJS := $$(addprefix $$(BUILD_DIR)/,$$($(exe)_OBJS))))
 
-LIB_SRCS = ../lib/tcp_buffer.c ../lib/tcp_utils.c ../lib/thpool.c
 # Replace .. with $(BUILD_DIR)
 LIB_OBJS = $(LIB_SRCS:../lib/%.c=$(BUILD_DIR)/lib/%.o)
 
