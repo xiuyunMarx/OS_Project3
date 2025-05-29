@@ -329,7 +329,13 @@ int handle_e(tcp_buffer *wb, int argc, char *args[], char *reply){
         reply_with_no(wb, buf, strlen(buf) + 1);
         return -1;
     }
-
+    for(int i=0;i<MAXUSERS;i++){
+        if(users_map[i].uid == atoi(args[1])){
+            users_map[i].uid = -1; // reset uid
+            Log("User %d logged out", atoi(args[1]));
+            break;
+        }
+    }
     cmd_exit(atoi(args[1]));
     sprintf(buf, "Bye!\n");
     Log("Exit");

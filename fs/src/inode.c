@@ -344,6 +344,7 @@ int writei(inode *ip, uchar *src, uint off, uint n) {
                 else ip->fileSize += tail; //otherwise, we should increase the file size by the tail
             }
         } 
+        Warn("writei: file:%s writing block %d, file size is now %d",ip->name, bno, ip->fileSize);
     }
 
     free(toWrite);

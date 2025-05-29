@@ -106,7 +106,13 @@ int cmd_w(int cyl, int sec, int len, char *data) {
 
     int start = cyl * _nsec + sec;
     memcpy(diskFile + start*BLOCKSIZE, buf, BLOCKSIZE);
-
+    if(diskFile){
+        int res = msync(diskFile + start*BLOCKSIZE, BLOCKSIZE, MS_SYNC);
+        if(res < 0){
+            Log("disk: cmd_w: error when syncing data to disk");
+            return -1;
+        }
+    }
     free(buf);
     // write data to disk
 

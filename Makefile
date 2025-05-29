@@ -9,5 +9,6 @@ test:
 clean:
 	@for n in $(SUB_DIR); do $(MAKE) -C $$n clean || exit 1; done
 	rm -rf runtimeCache/*
+	find . -type f \( -name "*.log" -o -name "*.img" \) -exec rm -f {} +
 
 .PHONY: all test clean
