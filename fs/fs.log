@@ -1,0 +1,46 @@
+[WARN] initializing disk...
+[WARN] mounting disk...:
+[WARN] mounting disk...:
+[WARN] cmd_f: file system uninitialized
+[WARN] mounting disk...:
+[WARN] cmd_f: file system uninitialized
+[WARN] mounting disk...:
+[WARN] cmd_f: file system uninitialized
+[WARN] mounting disk...:
+[WARN] cmd_f: file system uninitialized
+[WARN] mounting disk...:
+[WARN] cmd_f: file system uninitialized
+[WARN] mounting disk...:
+[WARN] cmd_f: file system uninitialized
+[WARN] mounting disk...:
+[WARN] cmd_f: file system uninitialized
+[WARN] mounting disk...:
+[WARN] cmd_f: file system uninitialized
+[WARN] mounting disk...:
+[WARN] cmd_f: file system uninitialized
+[WARN] mounting disk...:
+[WARN] cmd_f: file system uninitialized
+[ERROR] cmd_mk: file testfile already exists
+[WARN] mounting disk...:
+[WARN] cmd_f: file system uninitialized
+[WARN] mounting disk...:
+[WARN] cmd_f: file system uninitialized
+[ERROR] cmd_mk: file mydir already exists
+[WARN] mounting disk...:
+[WARN] cmd_f: file system uninitialized
+[WARN] mounting disk...:
+[WARN] cmd_f: file system uninitialized
+[WARN] mounting disk...:
+[WARN] cmd_f: file system uninitialized
+[ERROR] rm: file ghost not found
+[WARN] mounting disk...:
+[WARN] cmd_f: file system uninitialized
+[ERROR] cmd_rmdir: directory mydir is not empty
+[WARN] mounting disk...:
+[WARN] cmd_f: file system uninitialized
+[WARN] mounting disk...:
+[WARN] cmd_f: file system uninitialized
+[WARN] mounting disk...:
+[WARN] cmd_f: file system uninitialized
+[WARN] mounting disk...:
+[WARN] cmd_f: file system uninitialized

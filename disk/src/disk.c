@@ -75,11 +75,6 @@ int cmd_r(int cyl, int sec, char *buf) {
         return 1; //read a block each time
     }
     memcpy(buf, diskFile + start*BLOCKSIZE, BLOCKSIZE);
-    if(msync(diskFile, start * BLOCKSIZE, MS_SYNC) == -1){
-        Log("error when syncing file to disk\n");
-        return -1;
-    }// sync the file to disk
-
     diskDelay(lastCyl, cyl); // simulate the delay between cylinders
     lastCyl = cyl; // update the last cylinder accessed
 
@@ -94,6 +89,7 @@ int cmd_w(int cyl, int sec, int len, char *data) {
 
     char *buf = (char*)malloc(BLOCKSIZE * sizeof(char));
     if (buf == NULL) {
+        free(buf);
         Log("Error allocating memory");
         return 1;
     }
@@ -111,11 +107,16 @@ int cmd_w(int cyl, int sec, int len, char *data) {
 
     int start = cyl * _nsec + sec;
     memcpy(diskFile + start*BLOCKSIZE, buf, BLOCKSIZE);
-    if(msync(diskFile, start * BLOCKSIZE, MS_SYNC) == -1){
-        Log("error when syncing file to disk\n");
-        free(buf);
-        return -1;
-    }// sync the file to disk
+    if(diskFile){
+        int FILE_SIZE = _ncyl * _nsec * BLOCKSIZE;
+        int res = msync(diskFile, FILE_SIZE, MS_SYNC| MS_INVALIDATE);
+        if(res < 0){
+            Error("disk: cmd_w: error when syncing data to disk");
+            free(buf);
+            return -1;
+        }
+    }
+    
     free(buf);
     // write data to disk
 
@@ -124,7 +125,7 @@ int cmd_w(int cyl, int sec, int len, char *data) {
     return 0;
 }
 
-void close_disk() {
+void close_disk(void) {
     close(fd);
     if (diskFile != NULL) {
         munmap(diskFile, FILE_SIZE); // unmap the file
@@ -142,5 +143,4 @@ void diskDelay(int c1, int c2){ // simulating the delay between cylinders
     if(delay > 0){
         fprintf(stderr, "Disk delay: %d microseconds\n", delay);        
     }
-
 }

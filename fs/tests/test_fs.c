@@ -258,4 +258,5 @@ void fs_tests() {
     mt_run_test(test_small_file_ops);
     mt_run_test(test_folder_tree_operations);
     mt_run_test(test_folder_tree_with_rm);
+    free(sb.bitmap);
 }

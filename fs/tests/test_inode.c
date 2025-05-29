@@ -202,4 +202,5 @@ void inode_tests() {
     mt_run_test(test_readi);
     mt_run_test(test_read_write_mixed);
     mt_run_test(test_random_binary_read_write);
+    free(sb.bitmap);
 }
