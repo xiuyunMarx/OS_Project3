@@ -494,7 +494,7 @@ int cmd_cd(char *name) {
 bool _has_file(inode *dir){
     //check if the directory has any files recursively
     if(dir == NULL){
-        Error("cmd_rmdir: dir cannot be NULL");
+        Error("cmd_rmdir| has File:  dir cannot be NULL");
         return false;
     }
 
