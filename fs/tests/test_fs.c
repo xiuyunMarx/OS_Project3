@@ -48,6 +48,7 @@ mt_test(test_cmd_ls) {
     mt_assert(exist("b", T_FILE));
     mt_assert(exist("c", T_DIR));
     free(entries2);
+    cmd_exit();
     return 0;
 }
 
@@ -57,7 +58,7 @@ mt_test(test_cmd_mk) {
     mt_assert(rc == E_SUCCESS);
 
     mt_assert(exist("testfile", T_FILE));
-
+    cmd_exit();
     return 0;
 }
 
@@ -66,6 +67,7 @@ mt_test(test_cmd_mk_invalid) {
     int rc = cmd_mk("testfile", 0b1111);
     mt_assert(rc == E_SUCCESS);
     mt_assert(cmd_mk("testfile", 0b1111) == E_ERROR);
+    cmd_exit();
     return 0;
 }
 
@@ -76,6 +78,7 @@ mt_test(test_cmd_mkdir) {
     mt_assert(exist("mydir", T_DIR));
 
     mt_assert(cmd_cd("mydir") == E_SUCCESS);
+    cmd_exit();
     return 0;
 }
 
@@ -83,6 +86,7 @@ mt_test(test_cmd_mkdir_invalid) {
     format();
     mt_assert(cmd_mkdir("mydir", 0b1111) == E_SUCCESS);
     mt_assert(cmd_mkdir("mydir", 0b1111) == E_ERROR);
+    cmd_exit();
     return 0;
 }
 
@@ -93,7 +97,7 @@ mt_test(test_cmd_cd_absolute) {
     mt_assert(cmd_cd("/") == E_SUCCESS);
 
     mt_assert(exist("mydir", T_DIR));
-
+    cmd_exit();
     return 0;
 }
 
@@ -104,7 +108,7 @@ mt_test(test_cmd_cd_relative) {
     mt_assert(cmd_cd("..") == E_SUCCESS);
 
     mt_assert(exist("mydir", T_DIR));
-
+    cmd_exit();
     return 0;
 }
 
@@ -114,6 +118,7 @@ mt_test(test_cmd_rm) {
     mt_assert(cmd_rm("victim") == E_SUCCESS);
     mt_assert(!exist("victim", T_FILE));
     mt_assert(cmd_rm("ghost") == E_ERROR);
+    cmd_exit();
     return 0;
 }
 
@@ -126,7 +131,7 @@ mt_test(test_cmd_rmdir_with_files) {
     mt_assert(cmd_rmdir("mydir") == E_ERROR);
 
     mt_assert(exist("mydir", T_DIR));
-
+    cmd_exit();
     return 0;
 }
 
@@ -142,6 +147,7 @@ mt_test(test_file_lifecycle) {
     free(buf);
 
     mt_assert(cmd_rm("data.txt") == E_SUCCESS);
+    cmd_exit();
     return 0;
 }
 
@@ -163,6 +169,7 @@ mt_test(test_small_file_ops) {
     mt_assert(memcmp(buf, "worlo", 5) == 0);
     free(buf);
     mt_assert(cmd_rm("small.txt") == E_SUCCESS);
+    cmd_exit();
     return 0;
 }
 
@@ -207,6 +214,7 @@ mt_test(test_folder_tree_operations) {
     free(entries);
 
     mt_assert(cmd_cd("/") == E_SUCCESS);
+    cmd_exit();
     return 0;
 }
 
@@ -239,7 +247,7 @@ mt_test(test_folder_tree_with_rm) {
             mt_assert(exist(files[i], T_FILE));
         }
     }
-    
+    cmd_exit();
     return 0;
 }
 
@@ -258,5 +266,4 @@ void fs_tests() {
     mt_run_test(test_small_file_ops);
     mt_run_test(test_folder_tree_operations);
     mt_run_test(test_folder_tree_with_rm);
-    free(sb.bitmap);
 }

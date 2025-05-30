@@ -25,6 +25,7 @@ mt_test(test_ialloc) {
     mt_assert(ip != NULL);
     mt_assert(ip->type == T_DIR);
     iput(ip);
+    cmd_exit();
     return 0;
 }
 
@@ -39,6 +40,7 @@ mt_test(test_iget) {
     mt_assert(retrieved != NULL);
     mt_assert(retrieved->inum == inum);
     iput(retrieved);
+    cmd_exit();
     return 0;
 }
 
@@ -62,6 +64,7 @@ mt_test(test_iupdate) {
     mt_assert(retrieved->fileSize == 1024);
     mt_assert(retrieved->blocks == 10);
     iput(retrieved);
+    cmd_exit();
     return 0;
 }
 
@@ -84,6 +87,7 @@ mt_test(test_writei) {
     mt_assert(memcmp(data, buf, sizeof(data)) == 0);
 
     iput(ip);
+    cmd_exit();
     return 0;
 }
 
@@ -108,6 +112,7 @@ mt_test(test_readi) {
     mt_assert(bytes_read == 0);  // No data should be read beyond EOF
 
     iput(ip);
+    cmd_exit();
     return 0;
 }
 
@@ -143,6 +148,7 @@ mt_test(test_read_write_mixed) {
     mt_assert(memcmp(mixed_buf, expected_data, ip->fileSize) == 0);
 
     iput(ip);
+    cmd_exit();
     return 0;
 }
 
@@ -191,6 +197,7 @@ mt_test(test_random_binary_read_write) {
     free(random_data);
     free(read_buf);
     iput(ip);
+    cmd_exit();
     return 0;
 }
 

@@ -30,6 +30,7 @@ int cmd_cat(char *name, uchar **buf, uint *len);
 int cmd_w(char *name, uint len, const char *data);
 int cmd_i(char *name, uint pos, uint len, const char *data);
 int cmd_d(char *name, uint pos, uint len);
+int cmd_exit();
 
 int cmd_login(int auid);
 

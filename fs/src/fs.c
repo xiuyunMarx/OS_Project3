@@ -422,7 +422,7 @@ int cmd_rmdir(char *name) {
     cur->linkCount--;
     cur->fileSize -= sizeof(uint);
     cur->modTime = time(NULL);
-
+    free(links);
     iput(cur); //remove the link to target dir from its parent
     _rmdir_helper(target); //delete the target dir and its contents
     return E_SUCCESS;
@@ -727,6 +727,16 @@ int cmd_d(char *name, uint pos, uint len) {
     }
     iput(ip);
     return E_SUCCESS;
+}
+
+int cmd_exit(){
+    if(sb.bitmap != NULL){
+        free(sb.bitmap);
+        sb.bitmap = NULL;
+        return E_SUCCESS;
+    }
+    fprintf(stderr, "cmd_exit: sb.bitmap cannot be NULL\n");
+    return E_ERROR;
 }
 
 int cmd_login(int auid) {
