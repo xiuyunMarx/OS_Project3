@@ -197,6 +197,7 @@ mt_test(test_random_binary_read_write) {
     free(random_data);
     free(read_buf);
     iput(ip);
+    
     cmd_exit();
     return 0;
 }
