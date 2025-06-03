@@ -15,6 +15,7 @@
 #define BUFSIZE 1024
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t serverLock = PTHREAD_MUTEX_INITIALIZER;
 struct Mapping{
     int client_id;
     int uid; //file system user id
@@ -532,7 +533,7 @@ int on_recv(int id, tcp_buffer *wb, char *msg, int len) {
 }
 
 void cleanup(int id) {
-    pthread_mutex_lock(&mutex);
+    pthread_mutex_lock(&serverLock);
     // some code that are executed when a client is disconnected
     for(int i =0; i<MAXUSERS ;i++){
         if(users_map[i].client_id == id){
@@ -553,7 +554,7 @@ void cleanup(int id) {
     memcpy(buf, &sb, sizeof(superblock));
     write_block(0, buf);
     free(buf);
-    pthread_mutex_unlock(&mutex);
+    pthread_mutex_unlock(&serverLock);
 }
 
 FILE *log_file;
