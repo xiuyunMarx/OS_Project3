@@ -1,3 +1,4 @@
+
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -397,6 +398,7 @@ static struct {
 
 void on_connection(int id) {
     // some code that are executed when a new client is connected
+    pthread_mutex_lock(&serverLock);
     for(int i =0; i<MAXUSERS ;i++){
         if(users_map[i].client_id == -1){
             users_map[i].client_id = id;
@@ -405,6 +407,7 @@ void on_connection(int id) {
         }
     }
     Log("on_connection: client %d connected", id);
+    pthread_mutex_unlock(&serverLock);
 }
 
 int fetch_uid(int id){
