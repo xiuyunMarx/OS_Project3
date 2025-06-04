@@ -434,10 +434,16 @@ int on_recv(int id, tcp_buffer *wb, char *msg, int len) {
     char *argv[150];
     char *token;
 
-
+    int accLen = 0;
     while(argc < 150){
         if(argc == 3 && strcmp(argv[0], "w") == 0) {
             int data_len = 0;
+            if(len - accLen < atoi(argv[2]) + 1) {
+                fprintf(stderr, "Data length %s exceeds remaining message length %d\n", argv[2], len - accLen);
+                Error("on recv: Data length exceeds remaining message length");
+                reply_with_no(wb, "on recv: Data length exceeds remaining message length\n", 50);
+                return 0;
+            }
             data_len = atoi(argv[2]); // get the length of data
             assert(data_len >= 0);
             char *rest = token + strlen(token) + 1; // skip the first space;
@@ -447,6 +453,12 @@ int on_recv(int id, tcp_buffer *wb, char *msg, int len) {
             break; // no more tokens to process
         }else if(argc == 4 && strcmp(argv[0], "i") == 0) {
             int data_len = 0;
+            if(len - accLen <atoi(argv[3]) + 1) {
+                fprintf(stderr, "Data length %s exceeds remaining message length %d\n", argv[3], len - accLen);
+                Error("on recv: commmad i Data length exceeds remaining message length");
+                reply_with_no(wb, "on recv: Data length exceeds remaining message length\n", 50);
+                return 0;
+            }
             data_len = atoi(argv[3]);
             assert(data_len >= 0);
 
@@ -463,6 +475,7 @@ int on_recv(int id, tcp_buffer *wb, char *msg, int len) {
                 break; // no more tokens to process
             }            
             argv[argc++] = token;
+            accLen += strlen(token) + 1; // +1 for the space or null terminator
         }
 
     }
