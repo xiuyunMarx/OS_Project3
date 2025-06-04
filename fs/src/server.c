@@ -16,17 +16,26 @@
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t serverLock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t reader, writer;
+
+int reader_cnt = 0;
 struct Mapping{
     int client_id;
     int uid; //file system user id
 }users_map[MAXUSERS];
 
 int handle_f(tcp_buffer *wb, int argc, char *args[], char *reply){
+    // writer lock
+    pthread_mutex_lock(&reader);
+    pthread_mutex_lock(&writer);
+
     static char buf[BUFSIZE];
     if(argc != 1){
         sprintf(buf, "Usage: f (a single f)\n");
         Error("format : Invalid arguments");
         reply_with_no(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return -1;
     }
     assert(strcmp(args[0], "f") == 0);
@@ -35,22 +44,33 @@ int handle_f(tcp_buffer *wb, int argc, char *args[], char *reply){
         sprintf(buf, "format : format failed, only Root user can format\n");
         Error("format : Failed to format");
         reply_with_no(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return -1;
     }else{
         sprintf(buf, "format : Success\n");
         Log("format : Success");
         reply_with_yes(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return 0;
     }
     return 0;
 }
 
 int handle_mk(tcp_buffer *wb, int argc, char *args[], char *reply){
+    // mk f [mode]: create a file with the given name and mode
+    // writer lock
+    pthread_mutex_lock(&reader);
+    pthread_mutex_lock(&writer);
+
     static char buf[BUFSIZE];
     if(argc != 2 && argc != 3){
         sprintf(buf, "Usage: mk <filename> [mode]\n");
         Error("mk : Invalid arguments");
         reply_with_no(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return -1;
     }
 
@@ -62,21 +82,33 @@ int handle_mk(tcp_buffer *wb, int argc, char *args[], char *reply){
         sprintf(buf, "mk : Failed to create file\n");
         Error("mk : Failed to create file");
         reply_with_no(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return -1;
     }else{
         sprintf(buf, "mk : Success\n");
         Log("mk : Success");
         reply_with_yes(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return 0;
     }
 }
 
 int handle_mkdir(tcp_buffer *wb, int argc, char *args[], char *reply){
+    // mkdir dirname [mode]: create a directory with the given name and mode.
+    //some writing operations are needed
+    // writer lock
+    pthread_mutex_lock(&reader);
+    pthread_mutex_lock(&writer);
+
     static char buf[BUFSIZE];
     if(argc != 2 && argc != 3){
         sprintf(buf, "Usage: mkdir <dirname> [mode]\n");
         Error("mkdir : Invalid arguments, %d", argc);
         reply_with_no(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return -1;
     }
 
@@ -88,21 +120,31 @@ int handle_mkdir(tcp_buffer *wb, int argc, char *args[], char *reply){
         sprintf(buf, "mkdir : Failed to create directory\n");
         Error("mkdir : Failed to create directory");
         reply_with_no(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return -1;
     }else{
         sprintf(buf, "mkdir : Success\n");
         Log("mkdir : Success");
         reply_with_yes(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return 0;
     }
 }
 
 int handle_rm(tcp_buffer *wb, int argc, char *args[], char *reply){
+    // writer lock
+    pthread_mutex_lock(&reader);
+    pthread_mutex_lock(&writer);
+
     char buf[BUFSIZE];
     if(argc != 2){
         sprintf(buf, "Usage: rm <filename>\n");
         Error("rm : Invalid arguments");
         reply_with_no(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return -1;
     }
 
@@ -113,21 +155,44 @@ int handle_rm(tcp_buffer *wb, int argc, char *args[], char *reply){
         sprintf(buf, "rm : Failed to remove file\n");
         Error("rm : Failed to remove file");
         reply_with_no(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return -1;
     }else{
         sprintf(buf, "rm : Success\n");
         Log("rm : Success");
         reply_with_yes(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return 0;
     }
 }
 
 int handle_cd(tcp_buffer *wb, int argc, char *args[], char *reply){
-     char buf[BUFSIZE];
+    // A reader
+    pthread_mutex_lock(&writer);
+    pthread_mutex_lock(&mutex);
+    reader_cnt++;
+    pthread_mutex_unlock(&mutex);
+    if(reader_cnt == 1){
+        pthread_mutex_lock(&reader);
+    }
+
+
+    char buf[BUFSIZE];
     if(argc != 2){
         sprintf(buf, "Usage: cd <dirname>\n");
         Error("cd : Invalid arguments");
         reply_with_no(wb, buf, strlen(buf) + 1);
+
+        pthread_mutex_lock(&mutex);
+        reader_cnt--;
+        pthread_mutex_unlock(&mutex);
+        if(reader_cnt == 0){
+            pthread_mutex_unlock(&reader);
+        }
+        pthread_mutex_unlock(&writer);
+
         return -1;
     }
 
@@ -138,21 +203,45 @@ int handle_cd(tcp_buffer *wb, int argc, char *args[], char *reply){
         sprintf(buf, "cd : Failed to change directory\n");
         Error("cd : Failed to change directory");
         reply_with_no(wb, buf, strlen(buf) + 1);
+
+
+        pthread_mutex_lock(&mutex);
+        reader_cnt--;
+        pthread_mutex_unlock(&mutex);
+        if(reader_cnt == 0){
+            pthread_mutex_unlock(&reader);
+        }
+        pthread_mutex_unlock(&writer);
+
         return -1;
     }else{
         sprintf(buf, "cd : Success\n");
         Log("cd : Success");
         reply_with_yes(wb, buf, strlen(buf) + 1);
+
+        pthread_mutex_lock(&mutex);
+        reader_cnt--;
+        pthread_mutex_unlock(&mutex);
+        if(reader_cnt == 0){
+            pthread_mutex_unlock(&reader);
+        }
+        pthread_mutex_unlock(&writer);
+
         return 0;
     }
 }
 
 int handle_rmdir(tcp_buffer *wb, int argc, char *args[], char *reply){
-     char buf[BUFSIZE];
+    // writer lock
+    pthread_mutex_lock(&reader);
+    pthread_mutex_lock(&writer);
+    char buf[BUFSIZE];
     if(argc != 2){
         sprintf(buf, "Usage: rmdir <dirname>\n");
         Error("rmdir : Invalid arguments");
         reply_with_no(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return -1;
     }
 
@@ -163,32 +252,52 @@ int handle_rmdir(tcp_buffer *wb, int argc, char *args[], char *reply){
         sprintf(buf, "rmdir : Failed to remove directory\n");
         Error("rmdir : Failed to remove directory");
         reply_with_no(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return -1;
     }else{
         sprintf(buf, "rmdir : Success\n");
         Log("rmdir : Success");
         reply_with_yes(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return 0;
     }
 }
 
 int handle_ls(tcp_buffer *wb, int argc, char *args[], char *reply){
-     char buf[BUFSIZE];
+    // reader lock
+    pthread_mutex_lock(&writer);
+    pthread_mutex_lock(&mutex);
+    reader_cnt++;
+    pthread_mutex_unlock(&mutex);
+    if(reader_cnt == 1) pthread_mutex_lock(&reader);
+    char buf[BUFSIZE];
     if(argc != 1){
         sprintf(buf, "Usage: ls\n");
         Error("ls : Invalid arguments");
         reply_with_no(wb, buf, strlen(buf) + 1);
+        // unlock on failure
+        pthread_mutex_lock(&mutex);
+        reader_cnt--;
+        pthread_mutex_unlock(&mutex);
+        if(reader_cnt == 0) pthread_mutex_unlock(&reader);
+        pthread_mutex_unlock(&writer);
         return -1;
     }
-
     entry *entries = NULL;
     int n = 0;
-
     int ret = cmd_ls(&entries, &n);
     if(ret != E_SUCCESS){
         sprintf(buf, "ls : Failed to list files\n");
         Error("ls : Failed to list files");
         reply_with_no(wb, buf, strlen(buf) + 1);
+        // unlock on failure
+        pthread_mutex_lock(&mutex);
+        reader_cnt--;
+        pthread_mutex_unlock(&mutex);
+        if(reader_cnt == 0) pthread_mutex_unlock(&reader);
+        pthread_mutex_unlock(&writer);
         return -1;
     }else{
         sprintf(buf, "total entries: %d \n", n);
@@ -198,16 +307,34 @@ int handle_ls(tcp_buffer *wb, int argc, char *args[], char *reply){
         }
         Log("ls : Success");
         reply_with_yes(wb, buf, strlen(buf) + 1);
+        // unlock on success
+        pthread_mutex_lock(&mutex);
+        reader_cnt--;
+        pthread_mutex_unlock(&mutex);
+        if(reader_cnt == 0) pthread_mutex_unlock(&reader);
+        pthread_mutex_unlock(&writer);
         return 0;
     }
 }
 
 int handle_cat(tcp_buffer *wb, int argc, char *args[], char *reply){
-     char buf[BUFSIZE];
+    // reader lock
+    pthread_mutex_lock(&writer);
+    pthread_mutex_lock(&mutex);
+    reader_cnt++;
+    pthread_mutex_unlock(&mutex);
+    if(reader_cnt == 1) pthread_mutex_lock(&reader);
+    char buf[BUFSIZE];
     if(argc != 2){
         sprintf(buf, "Usage: cat <filename>\n");
         Error("cat : Invalid arguments");
         reply_with_no(wb, buf, strlen(buf) + 1);
+        // unlock on failure
+        pthread_mutex_lock(&mutex);
+        reader_cnt--;
+        pthread_mutex_unlock(&mutex);
+        if(reader_cnt == 0) pthread_mutex_unlock(&reader);
+        pthread_mutex_unlock(&writer);
         return -1;
     }
 
@@ -222,6 +349,12 @@ int handle_cat(tcp_buffer *wb, int argc, char *args[], char *reply){
         sprintf(buf, "cat : Failed to read file\n");
         Error("cat : Failed to read file");
         reply_with_no(wb, buf, strlen(buf) + 1);
+        // unlock on failure
+        pthread_mutex_lock(&mutex);
+        reader_cnt--;
+        pthread_mutex_unlock(&mutex);
+        if(reader_cnt == 0) pthread_mutex_unlock(&reader);
+        pthread_mutex_unlock(&writer);
         return -1;
     }else{
         Log("cat : Success");
@@ -230,17 +363,27 @@ int handle_cat(tcp_buffer *wb, int argc, char *args[], char *reply){
 
         reply_with_yes(wb, buf, len);
         free(data);
+        // unlock on success
+        pthread_mutex_lock(&mutex);
+        reader_cnt--;
+        pthread_mutex_unlock(&mutex);
+        if(reader_cnt == 0) pthread_mutex_unlock(&reader);
+        pthread_mutex_unlock(&writer);
         return 0;
     }
 }
 
 int handle_w(tcp_buffer *wb, int argc, char *args[], char *reply){
-    //w f l data: Write data into file
-     char buf[BUFSIZE];
+    // writer lock
+    pthread_mutex_lock(&reader);
+    pthread_mutex_lock(&writer);
+    char buf[BUFSIZE];
     if(argc != 3 && argc != 4){
         sprintf(buf, "Usage: w <filename> <length> [data]\n");
         Error("w : Invalid arguments");
         reply_with_no(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return -1;
     }
 
@@ -254,22 +397,30 @@ int handle_w(tcp_buffer *wb, int argc, char *args[], char *reply){
         sprintf(buf, "w : Failed to write file\n");
         Error("w : Failed to write file");
         reply_with_no(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return -1;
     }else{
         sprintf(buf, "w : Success\n");
         Log("w : Success");
         reply_with_yes(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return 0;
     }
 }
 
 int handle_i(tcp_buffer *wb, int argc, char *args[], char *reply){
-    // i f pos l data: Insert data to a file. 
+    // writer lock
+    pthread_mutex_lock(&reader);
+    pthread_mutex_lock(&writer);
     char buf[BUFSIZE];
     if(argc != 5){
         sprintf(buf, "Usage: i <filename> <position> <length> <data>\n");
         Error("i : Invalid arguments");
         reply_with_no(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return -1;
     }
     char name[MAXNAME];
@@ -277,28 +428,37 @@ int handle_i(tcp_buffer *wb, int argc, char *args[], char *reply){
     uint pos = atoi(args[2]);
     uint len = atoi(args[3]);
     char *data = args[4];
+
     int ret = cmd_i(name, pos, len, data);
 
     if(ret != E_SUCCESS){
         sprintf(buf, "i : Failed to insert data\n");
         Error("i : Failed to insert data");
         reply_with_no(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return -1;
     }else{
         sprintf(buf, "i : Success\n");
         Log("i : Success");
         reply_with_yes(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return 0;
     }    
 }
 
 int handle_d(tcp_buffer *wb, int argc, char *args[], char *reply){
-    //  d f pos l: Delete data in the file
-     char buf[BUFSIZE];
+    // writer lock
+    pthread_mutex_lock(&reader);
+    pthread_mutex_lock(&writer);
+    char buf[BUFSIZE];
     if(argc != 4){
         sprintf(buf, "Usage: d <filename> <position> <length>\n");
         Error("d : Invalid arguments");
         reply_with_no(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return -1;
     }
 
@@ -312,22 +472,30 @@ int handle_d(tcp_buffer *wb, int argc, char *args[], char *reply){
         sprintf(buf, "d : Failed to delete data\n");
         Error("d : Failed to delete data");
         reply_with_no(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return -1;
     }else{
         sprintf(buf, "d : Success\n");
         Log("d : Success");
         reply_with_yes(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return 0;
     }
 }
 
 int handle_e(tcp_buffer *wb, int argc, char *args[], char *reply){
-    // e: Exit
+    // writer lock
+    pthread_mutex_lock(&reader);
+    pthread_mutex_lock(&writer);
     char buf[BUFSIZE];
     if(argc != 2){
         sprintf(buf, "Usage: exit <uid>");
         Error("e : Invalid arguments");
         reply_with_no(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return -1;
     }
     for(int i=0;i<MAXUSERS;i++){
@@ -341,15 +509,22 @@ int handle_e(tcp_buffer *wb, int argc, char *args[], char *reply){
     sprintf(buf, "Bye!\n");
     Log("Exit");
     reply_with_yes(wb, buf, strlen(buf) + 1);
+    pthread_mutex_unlock(&writer);
+    pthread_mutex_unlock(&reader);
     return 0;
 }
 
 int handle_login(tcp_buffer *wb, int argc, char *args[], char *reply){
+    // writer lock
+    pthread_mutex_lock(&reader);
+    pthread_mutex_lock(&writer);
     char buf[BUFSIZE];
     if(argc != 2){
         sprintf(buf, "Usage: login <uid>\n");
         Error("login : Invalid arguments");
         reply_with_no(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return -1;
     }
 
@@ -360,25 +535,47 @@ int handle_login(tcp_buffer *wb, int argc, char *args[], char *reply){
         sprintf(buf, "login : Failed to login\n");
         Error("login : Failed to login");
         reply_with_no(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return -1;
     }else{
         sprintf(buf, "login : Success\n");
         Log("login : Success");
         reply_with_yes(wb, buf, strlen(buf) + 1);
+        pthread_mutex_unlock(&writer);
+        pthread_mutex_unlock(&reader);
         return 0;
     }
 }
 
 int handle_pwd(tcp_buffer *wb, int argc, char *args[], char *reply){
+    // reader lock
+    pthread_mutex_lock(&writer);
+    pthread_mutex_lock(&mutex);
+    reader_cnt++;
+    pthread_mutex_unlock(&mutex);
+    if(reader_cnt == 1) pthread_mutex_lock(&reader);
     char *buf;
     int ret = cmd_pwd(&buf, BSIZE);
     if (ret != E_SUCCESS) {
         reply_with_no(wb, "pwd failed\n", 11);
         free(buf);
+        // unlock reader
+        pthread_mutex_lock(&mutex);
+        reader_cnt--;
+        pthread_mutex_unlock(&mutex);
+        if(reader_cnt == 0) pthread_mutex_unlock(&reader);
+        pthread_mutex_unlock(&writer);
         return 0;
     } else {
         reply_with_yes(wb, buf, strlen(buf)+1);
         free(buf);
+        // unlock reader
+        pthread_mutex_lock(&mutex);
+        reader_cnt--;
+        pthread_mutex_unlock(&mutex);
+        if(reader_cnt == 0) pthread_mutex_unlock(&reader);
+        pthread_mutex_unlock(&writer);
         return  -1;
     }
 }    
@@ -500,7 +697,7 @@ int on_recv(int id, tcp_buffer *wb, char *msg, int len) {
         return 0;
     }
 
-    pthread_mutex_lock(&mutex); //lock the file system
+
     // 3. 查表分发
     char *none;
     int ret = 1;  
@@ -523,7 +720,7 @@ int on_recv(int id, tcp_buffer *wb, char *msg, int len) {
                 }
             }
         }
-        pthread_mutex_unlock(&mutex);
+
         return 0;
     }
     
@@ -531,12 +728,11 @@ int on_recv(int id, tcp_buffer *wb, char *msg, int len) {
         if(client_uid != 1){
             const char err[] = "Only root can format the file system";
             reply_with_no(wb, err, strlen(err) + 1);
-            pthread_mutex_unlock(&mutex);
             return 0;
         }
 
         ret = handle_f(wb, argc, argv, none);
-        pthread_mutex_unlock(&mutex);
+
         return 0;
     }
 
@@ -545,13 +741,13 @@ int on_recv(int id, tcp_buffer *wb, char *msg, int len) {
             if(is_formated() == false){
                 const char err[] = "File system not formated, formate first";
                 reply_with_no(wb, err, strlen(err) + 1);
-                pthread_mutex_unlock(&mutex);
+
                 return 0;
             }
             user_init(client_uid);
             ret = cmd_table[i].handler(wb, argc, argv, none);
             user_end(client_uid);
-            pthread_mutex_unlock(&mutex);
+
             return 0;
         }
     }
@@ -559,7 +755,7 @@ int on_recv(int id, tcp_buffer *wb, char *msg, int len) {
     char err[BUFSIZE];
     sprintf(err, "Unknown command: %s\n", argv[0]);
     reply_with_no(wb, err, strlen(err) + 1);
-    pthread_mutex_unlock(&mutex);
+
     return 0;
 }
 
