@@ -1,4 +1,3 @@
-
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -434,13 +433,12 @@ int on_recv(int id, tcp_buffer *wb, char *msg, int len) {
     int argc = 0;
     char *argv[150];
     char *token;
-    // while (token != NULL && argc < 150) {
-    //     argv[argc++] = token;
-    //     token = strtok(NULL, " \r\n");
-    // }
+
+
     while(argc < 150){
         if(argc == 3 && strcmp(argv[0], "w") == 0) {
-            int data_len = atoi(argv[2]);
+            int data_len = 0;
+            data_len = atoi(argv[2]); // get the length of data
             assert(data_len >= 0);
             char *rest = token + strlen(token) + 1; // skip the first space;
             rest[data_len] = '\0'; // ensure the data is null-terminated
@@ -448,9 +446,11 @@ int on_recv(int id, tcp_buffer *wb, char *msg, int len) {
             fprintf(stderr, "Data length: %d, Data: %s\n", data_len, rest);
             break; // no more tokens to process
         }else if(argc == 4 && strcmp(argv[0], "i") == 0) {
-            //i f pos l data: Insert data to a file.
-            int data_len = atoi(argv[3]);
+            int data_len = 0;
+            data_len = atoi(argv[3]);
             assert(data_len >= 0);
+
+            //i f pos l data: Insert data to a file.
             char *rest = token + strlen(token) + 1; // skip the first space;
             rest[data_len] = '\0'; // ensure the data is null-terminated
             argv[argc++] = rest; // store the data as the last argument
@@ -472,6 +472,12 @@ int on_recv(int id, tcp_buffer *wb, char *msg, int len) {
         return 0;
     }
 
+    // Reject login without UID to prevent crash
+    if (strcmp(argv[0], "login") == 0 && argc < 2) {
+        reply_with_no(wb, "Usage: login <uid>\n", strlen("Usage: login <uid>\n") + 1);
+        return 0;
+    }
+
     // 打印收到的命令
     fprintf(stderr, "Received command: %s\n", argv[0]);
 
@@ -486,15 +492,24 @@ int on_recv(int id, tcp_buffer *wb, char *msg, int len) {
     char *none;
     int ret = 1;  
 
-    if(strcmp(argv[0], "login") == 0){
-        // update uid for this connection's slot
-        for(int j = 0; j < MAXUSERS; j++){
-            if(users_map[j].client_id == id){
-                users_map[j].uid = atoi(argv[1]);
-                break;
+    // if user tries 'login' without uid, reject early
+    if (strcmp(argv[0], "login") == 0 && argc < 2) {
+        reply_with_no(wb, "Usage: login <uid>\n", strlen("Usage: login <uid>\n") + 1);
+        return 0;
+    }
+
+    if (strcmp(argv[0], "login") == 0) {
+        // perform login, handle_usage covers argc check
+        ret = handle_login(wb, argc, argv, none);
+        // on successful login (ret==0) and correct args, update mapping
+        if (ret == 0 && argc >= 2) {
+            for (int j = 0; j < MAXUSERS; j++) {
+                if (users_map[j].client_id == id) {
+                    users_map[j].uid = atoi(argv[1]);
+                    break;
+                }
             }
         }
-        ret = handle_login(wb, argc, argv, none);
         pthread_mutex_unlock(&mutex);
         return 0;
     }

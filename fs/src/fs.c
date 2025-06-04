@@ -975,6 +975,7 @@ void cmd_exit(uint u){
     uchar *buf = (uchar *)malloc(BSIZE);
     memset(buf, 0, BSIZE);
     memcpy(buf, &sb, sizeof(superblock));
+    assert(sb.root != 0 && sb.magic != 0);
     write_block(0, buf);
     free(buf);
 

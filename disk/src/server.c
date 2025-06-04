@@ -145,20 +145,34 @@ void cleanup(int id) {
 FILE *log_file;
 
 int main(int argc, char *argv[]) {
+    char *filename;
+    int ncyl, nsec, ttd, port;
     if (argc < 5) {
         fprintf(stderr,
                 "Usage: %s <disk file name> <cylinders> <sector per cylinder> "
                 "<track-to-track delay> <port>\n",
                 argv[0]);
-        exit(EXIT_FAILURE);
-    }
+        filename = (char *)malloc(64 * sizeof(char));
+        strcpy(filename, "disk.img");
+        ncyl = 100; // default number of cylinders
+        nsec = 100; // default number of sectors per cylinder
+        ttd = 10;  // default track-to-track delay
+        port = 10356;
+        fprintf(stderr, "Using default values: %s %d %d %d %d\n", filename, ncyl, nsec, ttd, port);
+    }else{
+        filename = argv[1];
+        ncyl = atoi(argv[2]);
+        nsec = atoi(argv[3]);
+        ttd = atoi(argv[4]);
+        port = atoi(argv[5]);
+        if (ncyl <= 0 || nsec <= 0 || ttd < 0 || port <= 0) {
+            fprintf(stderr, "Invalid arguments\n");
+            exit(EXIT_FAILURE);
+        }
+    }   
 
     // args
-    char *filename = argv[1];
-    int ncyl = atoi(argv[2]);
-    int nsec = atoi(argv[3]);
-    int ttd = atoi(argv[4]);  // ms
-    int port = atoi(argv[5]);
+
 
     log_init("disk.log");
 
@@ -175,4 +189,6 @@ int main(int argc, char *argv[]) {
     // never reached
     close_disk();
     log_close();
+    free(filename);
+    return 0;
 }
