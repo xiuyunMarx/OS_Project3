@@ -178,11 +178,9 @@ void diskClientSetup(){
     diskClient = client_init(BDS_addr, BDS_port);
 }
 
-void _mount_disk(){
 
-    // ensure TCP client is initialized
-    if (!diskClient) diskClientSetup();
-
+void fetch_disk_info(){
+    if(_nsec > 0 && _ncyl > 0) return; // already fetched
     char *msg = malloc(CMD_SIZE);
     strcpy(msg, "I");
     client_send(diskClient, msg, strlen(msg) + 1);
@@ -196,15 +194,16 @@ void _mount_disk(){
     assert(token != NULL);
     _nsec = atoi(token);
     free(msg);
-    // _ncyl = _nsec = 50;
-    // ttd = 5;
-    // int res = init_disk("disk.img", _ncyl, _nsec, ttd);
-    // if(res < 0){
-    //     fprintf(stderr, "Error opening disk\n");
-    //     close_disk();
-    //     Error("_mount_disk: error when opening disk");
-    //     return;
-    // }
+}
+
+
+void _mount_disk(){
+
+    // ensure TCP client is initialized
+    if (!diskClient) diskClientSetup();
+
+    
+    fetch_disk_info();
 
     uchar tmp[BSIZE];
     memset(tmp, 0, BSIZE);
@@ -418,10 +417,6 @@ void write_block(int blockno, uchar *buf){
 
 void exit_block(){
     _update_bitmap();
-
-    uchar tmp[BSIZE];
-    memset(tmp, 0, BSIZE);
-    memcpy(tmp, &sb, sizeof(sb));
-    write_block(0, tmp); // write superblock to disk
-    // write superblock to disk
+    assert(sb.magic == 0x12345678);
+    assert(sb.size > 0);
 }

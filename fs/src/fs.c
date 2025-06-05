@@ -14,7 +14,7 @@
 #include "../../include/log.h"
 #include "../include/common.h"
 #include "../include/inode.h"
-
+#define MAGIC 0x12345678
 entry curDir, backUp;
 uint curUser=1;
 
@@ -27,6 +27,17 @@ bool is_formated() {
         return false;
     }
     return true;
+}
+
+void store_sb(){
+    superblock to_store = sb;
+    memset(&to_store.users, 0, sizeof(to_store.users)); // clear user information
+    sb.bitmap = NULL; // clear bitmap to avoid storing it
+    uchar *buf = (uchar *)malloc(BSIZE);
+    memcpy(buf, &to_store, sizeof(superblock));
+    write_block(0, buf); // write superblock to disk
+    assert(to_store.users[0].uid == 0); //ensure no user information
+    free(buf);
 }
 
 entry _fetch_entry(uint inum){
@@ -72,6 +83,7 @@ enum {
     WRITE = 2,
     EXECUTE = 1,
 };
+
 uint _permission_check(inode *ip){
     if(curUser == 1){
         return READ | WRITE | EXECUTE; //root can access everything
@@ -122,6 +134,33 @@ int user_end(uint uid){
     return E_ERROR;
 }
 
+int load_basic_data(){
+    //load the basic data of file system; 
+    curUser = 1; //set the current user to root
+
+    fetch_disk_info();
+    uchar *buf = (uchar *)malloc(BSIZE);
+    read_block(0, buf);
+    memcpy(&sb, buf, sizeof(superblock));
+    free(buf);
+
+    if(sb.n_bitmap_blocks > 0){
+        Log("The file system is already formatted");
+        //n_bitmap_blocks 非零, 说明已经格式化过
+        sb.bitmap = (bool *)malloc(sb.n_bitmap_blocks * BSIZE);
+        if(sb.bitmap == NULL){
+            Warn("Error allocating memory for bitmap");
+            return E_ERROR;
+        }
+        _fetch_bitmap(); 
+    }
+
+    if(sb.magic == MAGIC){
+        assert(sb.size > 0 );
+        assert(sb.root != 0); 
+    }
+}
+
 int cmd_f() {
  /* Format. This will format the file system on the disk, by initializing any/all of the tables that
  the file system relies on*/
@@ -162,6 +201,8 @@ int cmd_f() {
     curDir.inum = root->inum;
     curDir.owner = root->owner;
     curDir.permission = root->permission;
+
+    store_sb(); //write superblock back to disk
 
     sbinit();
     iput(root);
@@ -959,12 +1000,14 @@ int cmd_login(int auid) {
     for(int i=0;i<MAXUSERS;i++){
         if(sb.users[i].uid == auid){
             fprintf(stderr,"User %d already logged in\n", auid);
+            Error("cmd_login: User %d already logged in", auid);
             return E_ERROR;
         }
         if(sb.users[i].uid == 0){
             sb.users[i].uid = auid;
             sb.users[i].cwd = 0; //No current directory initially
             fprintf(stderr,"User %d logged in\n", auid);
+            Log("cmd_login: User %d logged in", auid);
             return E_SUCCESS;
         }
     } 

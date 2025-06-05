@@ -43,4 +43,8 @@ uint allocate_iNode_block();
 void _mount_disk();
 void diskClientSetup();
 void exit_block();
+
+void _fetch_bitmap();
+void _update_bitmap();
+void fetch_disk_info();
 #endif

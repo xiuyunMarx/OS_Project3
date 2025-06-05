@@ -807,6 +807,8 @@ int main(int argc, char *argv[]) {
         users_map[i].uid = -1;
     }
     diskClientSetup();
+    load_basic_data(); // load superblock and bitmap from disk
+    
     tcp_server server = server_init(FSPort, 20, on_connection, on_recv, cleanup);
         //端口号, 线程数, 传入三个函数, 分别是: 有一个客户端连接时执行, server收到客户端的消息时的处理函数, 客户端断开连接时的处理函数
     server_run(server);
