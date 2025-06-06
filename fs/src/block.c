@@ -220,6 +220,7 @@ void _mount_disk(){
         sb.data_start = sb.size / 2; // 50% of the disk for data
         sb.n_blocks = sb.size - sb.data_start; //remaining blocks for data
         sb.n_iNodes = sb.data_start - sb.iNode_start; //remaining blocks for iNodes
+        
         sb.bitmap = (bool *)malloc(sb.n_bitmap_blocks * BSIZE);
         sb.root = 0; //uninitialized root 
 

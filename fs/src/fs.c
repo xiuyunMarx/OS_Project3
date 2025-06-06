@@ -32,7 +32,7 @@ bool is_formated() {
 void store_sb(){
     superblock to_store = sb;
     memset(&to_store.users, 0, sizeof(to_store.users)); // clear user information
-    sb.bitmap = NULL; // clear bitmap to avoid storing it
+    to_store.bitmap = NULL; // clear bitmap to avoid storing it
     uchar *buf = (uchar *)malloc(BSIZE);
     memcpy(buf, &to_store, sizeof(superblock));
     write_block(0, buf); // write superblock to disk
@@ -157,7 +157,7 @@ int load_basic_data(){
 
     if(sb.magic == MAGIC){
         assert(sb.size > 0 );
-        assert(sb.root != 0); 
+        assert(sb.root != 0 ); 
     }
 }
 
@@ -194,6 +194,7 @@ int cmd_f() {
             return E_ERROR;
         }
     }
+
     memcpy(&sb.users[0], &tmp_sb.users[0], sizeof(tmp_sb.users)); //restore user information
 
     strcpy(curDir.name, root->name);
